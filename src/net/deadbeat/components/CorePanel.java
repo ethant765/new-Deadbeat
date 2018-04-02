@@ -5,6 +5,7 @@
  */
 package net.deadbeat.components;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GradientPaint;
@@ -12,7 +13,6 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import javax.swing.JPanel;
-import net.deadbeat.main.RelativeLayout;
 
 /**
  *
@@ -24,6 +24,8 @@ public class CorePanel extends JPanel{
     protected int contentWidth;
     protected int positionX = 0;
     protected int positionY = 0;
+    
+    public final int shadowWidth = 100;
     
     
     public void setDimension(int w, int h){
@@ -41,15 +43,30 @@ public class CorePanel extends JPanel{
         
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
         
-        final GradientPaint gradient = new GradientPaint(
+        // draw background
+        GradientPaint gradient = new GradientPaint(
             new Point( 0 , this.contentHeight ), new Color(15,12,34),
             new Point( this.contentWidth , 0 ), new Color(114, 104, 176),
             false);
         
-        final Graphics2D g2 = (Graphics2D)g;
+        Graphics2D g2 = (Graphics2D)g;
         g2.setPaint(gradient);
         
         g.fillRect(0, 0, this.contentWidth , this.contentHeight);
+        
+        // manually draw shadow
+        int alphaStart = 0;
+        int alphaEnd = 200;
+        int xStart = (( this.contentWidth / 100 ) * 25) - (this.shadowWidth / 5);
+        int xEnd = (( this.contentWidth / 100 ) * 25) + ((this.shadowWidth / 5) * 4) ;
+        int alphaStep = (alphaEnd - alphaStart)/100;
+        int positionStep = (xEnd - xStart) / 100;
+        
+        for (int i = 0; i < 100; i++){
+            g.setColor( new Color(0,0,0, alphaStart + (alphaStep * i) ) );
+            g.fillRect( xStart + (positionStep * i) , 0, 1, this.getHeight());
+        }
+        
        
     }
 

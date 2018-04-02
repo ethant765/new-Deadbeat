@@ -5,6 +5,7 @@
  */
 package net.deadbeat.main;
 
+import net.deadbeat.layout.RawLayout;
 import net.deadbeat.components.CoreOverlayPanel;
 import net.deadbeat.components.CorePanel;
 import java.awt.Dimension;
@@ -12,6 +13,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.JFrame;
+import net.deadbeat.components.CoreBar;
+import static net.deadbeat.main.Controller.cbar;
 
 /**
  *
@@ -35,8 +38,13 @@ public class Home extends javax.swing.JFrame {
         
         corepanel = new CorePanel();
         overlaypanel = new CoreOverlayPanel();
+        cbar = new CoreBar(corepanel,this);
         
-        corepanel.setLayout( new RelativeLayout(corepanel,overlaypanel,this) );
+        corepanel.setLayout( null );
+        overlaypanel.setLayout( null );
+        cbar.setLayout(null);
+        
+        Controller.prepareElements(corepanel, overlaypanel, this, cbar);
         
         setUndecorated(true);
         JFrame.setDefaultLookAndFeelDecorated(false);
@@ -46,30 +54,32 @@ public class Home extends javax.swing.JFrame {
 
         this.setSize(900,640);
         this.setMinimumSize(new Dimension(900,640));
-        this.setPreferredSize(new Dimension(900,640));
+//        this.setPreferredSize(new Dimension(900,640));
 
-        int ow = (getWidth()/100) * 22;
         corepanel.setDimension(getWidth(), getHeight());
         
-        overlaypanel.setPosition( ow , 20 );
-        overlaypanel.setDimension( getWidth() - ow , getContainerHeight() );
+        final int sidebarWidth = (getWidth()/100) * 25;
+        overlaypanel.setBounds(sidebarWidth, 0, getWidth() - sidebarWidth , getHeight());
         
+        corepanel.add(cbar);
         corepanel.add(overlaypanel);
         
-        setShape(new RoundRectangle2D.Double(20, 20, getWidth() - 20, getContainerHeight(), 6, 6));
+//        Controller.reflow();
+        
+        // control bar
+        
         
      
         this.getRootPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 // force update the dimensions so panel can update graphics
-                int sidebarWidth = (getWidth()/100) * 25;
-                corepanel.setDimension(getWidth(), getHeight());
-                overlaypanel.setPosition( sidebarWidth , 20 );
-                overlaypanel.setDimension( getWidth() - sidebarWidth , getContainerHeight() );
+                overlaypanel.setBounds(sidebarWidth, 0, getWidth() - sidebarWidth , getHeight());
+                corepanel.setBounds(0, 0, getWidth(), getHeight());
                 
-                ( (RelativeLayout)corepanel.getLayout() ).performLayout();
+                Controller.reflow();
             }
+            
         });
         
         System.out.println("Frame Initialized");
@@ -77,12 +87,7 @@ public class Home extends javax.swing.JFrame {
         initComponents();
        
     }
-    
-    public int getContainerHeight(){
-        // remove bit where titlebar usually resides
-        return getHeight() - 20;
-    }
-    
+ 
     public int getContainerWidth(){
         return getWidth();
     }
@@ -142,11 +147,13 @@ public class Home extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Home().setVisible(true);
+                Home application = new Home();
+                application.setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+
     // End of variables declaration//GEN-END:variables
 }

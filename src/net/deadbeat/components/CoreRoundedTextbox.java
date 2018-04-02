@@ -199,14 +199,14 @@ public class CoreRoundedTextbox extends JPanel implements KeyListener{
             graphics.setColor(Color.white);
         }
         else{
-            graphics.setColor( new Color(255,255,255,100) );
+            graphics.setColor( new Color(255,255,255,50) );
         }
         graphics.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight() , getHeight());
         
         graphics.setFont(new Font("Monospaced", Font.PLAIN, 14)); 
         
         if ( this.value.length() == 0 ){
-            graphics.setColor(new Color(114, 104, 176));
+            graphics.setColor(new Color(255,255,255, 100));
             graphics.drawString(this.placeholder, 8, getHeight() - 7);
         }
         else{

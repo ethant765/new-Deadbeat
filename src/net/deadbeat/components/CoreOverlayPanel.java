@@ -16,7 +16,7 @@ import java.awt.Point;
  * @author darylcecile
  */
 public class CoreOverlayPanel extends CorePanel {
-    
+ 
     public void setPosition(int x, int y){
         this.positionX = x;
         this.positionY = y;
@@ -28,14 +28,14 @@ public class CoreOverlayPanel extends CorePanel {
         super.paintComponent(g); //To change body of generated methods, choose Tools | Templates.
         
         final GradientPaint gradient = new GradientPaint(
-            new Point( this.contentWidth , this.contentHeight ), new Color(15,12,34),
+            new Point( this.getWidth() , this.getHeight() ), new Color(15,12,34),
             new Point( 0 , 0 ), new Color(114, 104, 176),
             false);
         
         final Graphics2D g2 = (Graphics2D)g;
         g2.setPaint(gradient);
         
-        g.fillRect(0, 0, this.contentWidth , this.contentHeight);
+        g.fillRect( 0 , 0, this.getWidth() , this.getHeight());
        
     }
     

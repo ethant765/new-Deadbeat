@@ -43,7 +43,7 @@ public class CoreImage extends JLabel {
         this.setIcon( imageIcon );
     }
     
-    private Image resizeImage(Image img , int w , int h)
+    public static Image resizeImage(Image img , int w , int h)
     {
         BufferedImage resizedimage = new BufferedImage(w,h,BufferedImage.TRANSLUCENT);
         Graphics2D g2 = resizedimage.createGraphics();
