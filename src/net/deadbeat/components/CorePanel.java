@@ -46,7 +46,7 @@ public class CorePanel extends JPanel{
         // draw background
         GradientPaint gradient = new GradientPaint(
             new Point( 0 , this.contentHeight ), new Color(15,12,34),
-            new Point( this.contentWidth , 0 ), new Color(114, 104, 176),
+            new Point( 600 , this.contentHeight - 700 ), new Color(114, 104, 176),
             false);
         
         Graphics2D g2 = (Graphics2D)g;

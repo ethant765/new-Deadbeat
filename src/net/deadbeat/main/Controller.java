@@ -92,14 +92,13 @@ public class Controller {
     }
     
     public static void reflow(){
+        final int sidebarWidth = (dash.getWidth()/100) * 25;
+        
         dash.setShape(new RoundRectangle2D.Double(0, 0, dash.getWidth(), dash.getHeight(), 6, 6));
         
         corepanel.setDimension(dash.getWidth(), dash.getHeight());
         corepanel.setBounds(0, 0, dash.getWidth(), dash.getHeight());
-        final int sidebarWidth = (dash.getWidth()/100) * 25;
         coreoverlaypanel.setBounds(sidebarWidth, 0, dash.getWidth() - sidebarWidth , dash.getHeight());
-        
-        System.out.println("S"+dash.getWidth());
         
         int logoHeight = (int) ( (sidebarWidth - 32) / 1.85 );
         logo.setBounds(14, 20, sidebarWidth - 32 , logoHeight );
@@ -114,7 +113,6 @@ public class Controller {
         closeBtn.setColor(new Color(244, 67, 54), new Color(198, 40, 40));
         minBtn.setColor(new Color(255, 193, 7), new Color(255, 143, 0));
         maxBtn.setColor(new Color(76, 175, 80), new Color(46, 125, 50));
-
 
         closeBtn.setBounds(
                 CBAR_GAP,
