@@ -7,17 +7,9 @@ package net.deadbeat.core;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Image;
-import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.geom.RoundRectangle2D;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import net.deadbeat.ui.CoreBar;
 import net.deadbeat.ui.CoreButton;
@@ -91,7 +83,6 @@ public class Controller {
                 }
             });
             
-            System.out.println("CREATE ELEMENT");
         });
         
         
@@ -138,9 +129,6 @@ public class Controller {
                 CBAR_DIAMETER,
                 CBAR_DIAMETER
         );
-
-        
-        System.out.println("REFLOW");
         
         // Searchbox
         searchbox.setAlignmentX(0f);

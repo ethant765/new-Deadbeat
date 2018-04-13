@@ -18,7 +18,7 @@ public class TaskController {
             new java.util.TimerTask() {
                 @Override
                 public void run() {
-                    task.run();
+                    task.Run();
                 }
             }, 
             delay_ms 
@@ -51,22 +51,5 @@ public class TaskController {
     public static void runAfter(Runnable action){
         java.awt.EventQueue.invokeLater(action);
     }
-    
-    public abstract class Task implements Runnable {
-        private Object[] parameterData;
-
-        public void complete(Object... param){
-            run(param);
-        }
-        
-        public void run(Object... param){
-            this.parameterData = param;
-            this.run();
-        }
-        
-        public void call(Object... param){
-            run(param);
-        }
-      }
     
 }

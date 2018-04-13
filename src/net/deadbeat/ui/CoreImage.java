@@ -29,8 +29,6 @@ public class CoreImage extends JLabel {
         super();
         try {
             img = ImageIO.read( getClass().getResource("/net/deadbeat/resources/"+fileName) );
-            System.out.println("set Image" + fileName);
-            System.out.println( img );
         } catch (IOException ex) {
             Logger.getLogger(CoreImage.class.getName()).log(Level.SEVERE, null, ex);
             System.err.println(ex.toString());

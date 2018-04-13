@@ -93,8 +93,6 @@ public class CoreBar extends JPanel {
         
         this.setPreferredSize(new Dimension(w,h));
         this.setBounds(this.positionX,this.positionY,w,h);
-        
-        System.out.println("Updated dimension");
     }
 
     @Override
