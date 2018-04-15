@@ -61,3 +61,5 @@ os.arch=amd64
 os.version=10.0
 derby.system.home=F:\uniwork\Year 2\systems Software\assessment\Repo\Deadbeat\DatabaseFolder
 Database Class Loader started - derby.database.classpath=''
+----------------------------------------------------------------
+Sun Apr 15 21:27:03 BST 2018: Shutting down Derby engine
