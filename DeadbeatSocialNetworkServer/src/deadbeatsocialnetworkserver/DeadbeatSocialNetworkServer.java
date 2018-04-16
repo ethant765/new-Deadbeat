@@ -18,37 +18,31 @@ public class DeadbeatSocialNetworkServer {
     /**
      * @param args the command line arguments
      */
+    
     public static void main(String[] args) {
-        try{
-            int portNum = 9090;
-            
-        } catch(IOException e){
-            System.err.println("Error! - " + e.getMessage());
-        }
-        
-        
+        DeadbeatSocialNetworkServer server = new DeadbeatSocialNetworkServer();
+        server.NewClient();
     }
     
-}
-
-
-/*try{
-
-            int portNumber = 9090;
-            DatagramSocket server = new DatagramSocket(portNumber);
-            
+    protected void NewClient(){
+        int portNum = 9090;
+        try{
+            DatagramSocket serverSocket = new DatagramSocket(portNum);
             byte[] data = new byte[1024];
-            DatagramPacket receivedPacket = new DatagramPacket(data, data.length);
-            server.receive(receivedPacket);
-            data = receivedPacket.getData();
-            String Message = new String(data);
             
-            Message = Message.toUpperCase();
+            while(true){
+                System.out.println("Waiting for a client...");
+                
+                //initial data recieved here should be a boolean
+                //true fro existingUser, false for newUser
+                DatagramPacket recieveData = new DatagramPacket(data, data.length);
+                serverSocket.receive(recieveData);
+                
+                //create a new thread for each client which is connecting
+                Thread newClient = new Thread(new UserThread(serverSocket, recieveData));
+                newClient.start();
+            }
             
-            data = Message.getBytes();
-            
-            
-            
-        }catch(IOException e){
-            System.err.println("Error! - " + e.getMessage());
-        }*/
+        }catch(IOException e){System.err.println(e.getMessage());}
+    }
+}
