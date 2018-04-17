@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 
 //class handles all the interactions with the database
 //requries the SQL Query passing for the DB commands
-public class BDInteractions {
+public class DBInteractions {
     
     public static String SQLPath = "jdbc:derby://localhost:1527/DeadbeatDatabase";
     Connection conn = null;

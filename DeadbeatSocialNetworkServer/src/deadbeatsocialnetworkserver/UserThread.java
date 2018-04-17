@@ -88,7 +88,7 @@ public class UserThread implements Runnable{
     //should remove users IPaddress and info from active users table (Members table)
     protected void logOff(){
         String SQLStatement = "delete from Members where IPAddress = " + userIP; //should clear the row in the DB table for clients IP
-        BDInteractions dataChange = new BDInteractions();
+        DBInteractions dataChange = new DBInteractions();
         dataChange.EditData(SQLStatement);
     }
 }
