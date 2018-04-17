@@ -6,6 +6,7 @@
 package deadbeatsocialnetworkserver;
 
 import java.net.*;
+
 /**
  *
  * @author Ethan
@@ -25,6 +26,8 @@ public class UserThread implements Runnable{
         userIP = pak.getAddress();
         userPort = pak.getPort();
     }
+    
+    //each byte of data is a string. the string could start with integer/key word indicating to the server which operation needs performing
     
     public void run(){
         boolean logOff = false;
