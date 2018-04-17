@@ -22,22 +22,51 @@ public class DBInteractions {
     Statement stmt = null;
     ResultSet res = null;
     
-    //will return the results of any Select statement passed to it
-    public synchronized ResultSet selectData(String SQLQuery){
+    public void DeleteRecord(String tableName, String condition){
+        String SQLQuery = "delete from " + tableName;
+        if(condition != null){
+            SQLQuery += " where " + condition;
+        }
+        EditData(SQLQuery, "delete");
+    }
+    
+    public void UpdateRecord(String tableName, String newValues, String condition){
+        String SQLQuery = "update " + tableName + " set " + newValues;
+        if(condition != null){
+            SQLQuery += " where " + condition;
+        }
+        EditData(SQLQuery, "update");
+    }
+    
+    public void InsertRecord(String tableName, String tableCols, String vals){
+        String SQLQuery = "insert into " + tableName + tableCols + " values " + vals;
+        EditData(SQLQuery, "insert");
+    }
+    
+    public ResultSet GetRecord(String values, String tableName, String condition){
+        String SQLQuery = "select" + values + " from " + tableName;
+        if(condition != null){
+            SQLQuery += " where " + condition;
+        }
+        return EditData(SQLQuery, "select");
+    }
+
+    
+    
+    //will update,add,remove, fetch data from DB
+    //dependant on String passed
+    private synchronized ResultSet EditData(String SQLQuery, String SQLCommand){
         try{
             conn = DriverManager.getConnection(SQLPath);
             stmt = conn.createStatement();
-            res = stmt.executeQuery(SQLQuery);
+            
+            if(SQLCommand == "select"){
+                res = stmt.executeQuery(SQLQuery);
+            }
+            else{
+                stmt.executeUpdate(SQLQuery);
+            }
         }catch(Exception e){System.err.println(e.getMessage());}
         return res;
-    }
-    //will update,add,remove data from DB
-    //dependant on String passed
-    public synchronized void EditData(String SQLQuery){
-        try{
-            conn = DriverManager.getConnection(SQLPath);
-            stmt = conn.createStatement();
-            stmt.executeUpdate(SQLQuery);
-        }catch(Exception e){System.err.println(e.getMessage());}
     }
 }

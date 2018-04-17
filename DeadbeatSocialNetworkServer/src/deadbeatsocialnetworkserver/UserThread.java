@@ -92,6 +92,6 @@ public class UserThread implements Runnable{
     protected void logOff(){
         String SQLStatement = "delete from Members where IPAddress = " + userIP; //should clear the row in the DB table for clients IP
         DBInteractions dataChange = new DBInteractions();
-        dataChange.EditData(SQLStatement);
+        //dataChange.EditData(SQLStatement);
     }
 }
