@@ -45,46 +45,46 @@ public class UserThread implements Runnable{
         String messageParts[] = SplitString(Message);
         
         
-        if(String.valueOf(headers.LoginNewUser).equals(messageParts[0])){
+        if(String.valueOf(headers.LOGINNEWUSER).equals(messageParts[0])){
            
         }
-        else if(String.valueOf(headers.LoginExistingUser).equals(messageParts[0])){
+        else if(String.valueOf(headers.LOGINEXISTINGUSER).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.LogOff).equals(messageParts[0])){
+        else if(String.valueOf(headers.LOGOFF).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.ShareSong).equals(messageParts[0])){ 
+        else if(String.valueOf(headers.SHARESONG).equals(messageParts[0])){ 
 
         }
-        else if(String.valueOf(headers.UpdateActiveUsers).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATEACTIVEUSERS).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.RecieveFriendsSharedSongs).equals(messageParts[0])){
+        else if(String.valueOf(headers.RECIEVEFRIENDSSHAREDSONGS).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.RecieveUsersSharedSongs).equals(messageParts[0])){
+        else if(String.valueOf(headers.RECIEVEUSERSSHAREDSONGS).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.RecieveSimilarProfiles).equals(messageParts[0])){
+        else if(String.valueOf(headers.RECIEVESIMILARPROFILES).equals(messageParts[0])){
                 
         }
-        else if(String.valueOf(headers.UpdateMessageBoard).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATEMESSAGEBOARD).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.AddToMessageBoard).equals(messageParts[0])){
+        else if(String.valueOf(headers.ADDTOMESSAGEBOARD).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.UpdateFriendRequests).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATEFRIENDREQUESTS).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.FriendsList).equals(messageParts[0])){
+        else if(String.valueOf(headers.FRIENDSLIST).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.SendFriendRequest).equals(messageParts[0])){
+        else if(String.valueOf(headers.SENDFRIENDREQUEST).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.ChangeFriendRequestStatus).equals(messageParts[0])){
+        else if(String.valueOf(headers.CHANGEFRIENDREQUESTSTATUS).equals(messageParts[0])){
             
         }
         else{
