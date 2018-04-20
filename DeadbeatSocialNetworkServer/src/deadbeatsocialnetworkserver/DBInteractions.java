@@ -49,6 +49,10 @@ public class DBInteractions {
         return EditData(SQLQuery, "select");
     }
     
+    public ResultSet GetCustomRecord(String command){
+        return EditData(command, "select");
+    }
+    
     //will update,add,remove, fetch data from DB
     //dependant on String passed
     private synchronized ResultSet EditData(String SQLQuery, String SQLCommand){

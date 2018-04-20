@@ -1,7 +1,7 @@
-Thu Apr 19 23:41:25 BST 2018 : Apache Derby Network Server - 10.11.1.2 - (1629631) started and ready to accept connections on port 1527
+Fri Apr 20 23:41:37 BST 2018 : Apache Derby Network Server - 10.11.1.2 - (1629631) started and ready to accept connections on port 1527
 ----------------------------------------------------------------
-Thu Apr 19 23:41:25 BST 2018:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.2 - (1629631): instance a816c00e-0162-e011-cae2-00000c0fa6cc 
+Fri Apr 20 23:41:37 BST 2018:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.11.1.2 - (1629631): instance a816c00e-0162-e538-566c-00000c0fa6cc 
 on database directory F:\uniwork\Year 2\systems Software\assessment\Repo\Deadbeat\DatabaseFolder\DeadbeatDatabase with class loader sun.misc.Launcher$AppClassLoader@1d44bcfa 
 Loaded from file:/F:/netbeans%20install/jdk1.8.0_151/db/lib/derby.jar
 java.vendor=Oracle Corporation
@@ -12,5 +12,3 @@ os.arch=amd64
 os.version=10.0
 derby.system.home=F:\uniwork\Year 2\systems Software\assessment\Repo\Deadbeat\DatabaseFolder
 Database Class Loader started - derby.database.classpath=''
-----------------------------------------------------------------
-Fri Apr 20 12:06:38 BST 2018: Shutting down Derby engine

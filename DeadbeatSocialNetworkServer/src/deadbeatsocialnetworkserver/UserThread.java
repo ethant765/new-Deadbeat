@@ -260,28 +260,17 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(int UserID){
-        String friends = null;
-        
-        //get a list of all the users frinds
-        String Value = "User_ID, Friend_ID";
-        String Table = "Friends";
-        String Condition = "User_ID = " + UserID + " OR Friend_ID = " + UserID;
-        ResultSet result = dataChange.GetRecord(Value, Table, Condition);
-        
-        try{
-            //loop through each friend
-            while(result.next()){
-                //test if this is friendsID or current users ID
-                if(result.getInt("User_ID") != UserID){ 
-                    friends += "," + getUserName(result.getInt("User_ID"));
-                }
-                else{
-                    friends += "," + getUserName(result.getInt("Friend_ID"));
-                }
-            }
-        }catch(Exception e){System.err.println(e.getMessage());}
-        
-        return null;
+       String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
+               "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
+               "WHERE Friends.User_ID <> " + UserID +
+               " AND Friends.Status_ID = 'con') " +
+               "UNION " +
+               "(SELECT Profiles.user_ID, Profiles.UserName " +
+               "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.Friend_ID " +
+               "WHERE Friends.Friend_ID <> " + UserID +
+               " AND Friends.Status_ID = 'con')";
+
+        return dataChange.GetCustomRecord(sqlCmd);
     }
     
     //allows the client to send a friend request to another user who isn't already their friend
