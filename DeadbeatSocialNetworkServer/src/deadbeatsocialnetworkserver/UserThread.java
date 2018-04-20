@@ -6,6 +6,8 @@
 package deadbeatsocialnetworkserver;
 
 import java.net.*;
+import java.sql.ResultSet;
+import java.util.*;
 
 /**
  *
@@ -14,6 +16,9 @@ import java.net.*;
 
 //Thread class which is resposible for each client connected to the server
 public class UserThread implements Runnable{
+    
+    dataHeader headers;
+    DBInteractions dataChange = new DBInteractions();
     
     DatagramSocket socket;
     DatagramPacket packet;
@@ -25,73 +30,202 @@ public class UserThread implements Runnable{
         packet = pak;
         userIP = pak.getAddress();
         userPort = pak.getPort();
+        
     }
     
-    //each byte of data is a string. the string could start with integer/key word indicating to the server which operation needs performing
+    public UserThread(dataHeader headers){
+        this.headers = headers;
+    }
     
     public void run(){
-        boolean logOff = false;
+        //get the data sent from the user on their connection to the server
+        byte[] data = new byte[1024];
+        data = packet.getData();
+        String Message = new String(data);
+        String messageParts[] = SplitString(Message);
         
-        LoginHandler();
         
-        while(logOff == false){
-            //thread includes 2 second pause
-            //loop data to client every 2 seconds like spec asks
-            //if client sends logoff boolean data then exit loop - which should end connection with client
+        if(String.valueOf(headers.updateInfo).equals(messageParts[0])){
+            //update messageboard info, update active users list, recieve new friend request notifications, recieve friends request acceptance notifications
         }
-        
-        //before connection lost clear user from active users table
-        logOff();
+        else if(String.valueOf(headers.RecieveSimilarProfiles).equals(messageParts[0])){
+            //list of users with similar music preferences sent back to the user
+        }
+        else if(String.valueOf(headers.recieveFriendsSharedSongs).equals(messageParts[0])){
+            //request a friends shared song from, song returned to user
+        }
+        else if(String.valueOf(headers.logOff).equals(messageParts[0])){ 
+            //sent string for log off only requires header vals
+            //as IP address is used for log off this can be retrieved server side
+            logOff();
+        }
+        else if(String.valueOf(headers.login).equals(messageParts[0])){
+            //handles the login for the client
+            //For exisint user:         sent string requries header, boolean isExistingUser = true, userName    - in that order
+            //For new user:             sent string requires header, boolean isExistingUser = false, UserName, PlaceOfBirth, DOB, ProfileImage BLOB DATA        - in that order
+            LoginHandler(messageParts);
+        }
+        else if(String.valueOf(headers.addToMessageBoard).equals(messageParts[0])){
+            
+        }
+        else{
+            //error
+        }
     }
     
-    //deals with the login and new users when client first connects
-    protected void LoginHandler(){
-        byte[] data = new byte[1024];
-        data = packet.getData();       
+    //function used to return data to the client
+    private void sendToUser(String message){
+        try{
+            byte[] data = message.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
+            socket.send(sendPacket);
+        }catch(Exception e){System.err.println(e.getMessage());}
+    }
+    
+    //used to split recieved strings into their indervidual tokens
+    private String[] SplitString(String passedString){
+        StringTokenizer tokens = new StringTokenizer(passedString, ",");
+        int numOfTokens = tokens.countTokens();
+        String holder[] = new String[numOfTokens];
         
-        String Message = new String(data);
-        boolean existingUser = Boolean.parseBoolean(Message);
-        String ReturnMessages;
-        int success;
+        for(int i = 0; i < numOfTokens; i++){
+            holder[i] = tokens.nextToken().trim();
+        }
+        return holder;
+    }
+    
+    //deals with the login and new users when client first connects to server
+    private void LoginHandler(String[] loginData){
+        boolean existingUser = Boolean.valueOf(loginData[1]);
+        String returnMessage;
         
-        do{
-            if(existingUser == true){
-                //1 for error - 0 for success
-                success = returningUser();
-                ReturnMessages = Integer.toString(success);
-            }
-            else{
-                //1 for error - 0 for success
-                success = newUser();
-               ReturnMessages = Integer.toString(success);
-            }
-
-            try{
-                //send data to client informing of successful login
-                byte[] successData = ReturnMessages.getBytes();
-                DatagramPacket sendData = new DatagramPacket(successData, successData.length, userIP, userPort);
-                socket.send(sendData);
-            }catch(Exception e){System.err.println(e.getMessage());}
-            
-        }while(success != 0);//loop till login successful
+        if(existingUser == true){
+            returnMessage = returningUser(loginData[2]);
+        }
+        else{
+            returnMessage = newUser(loginData);
+        }
+        
+        
+        //once login/sign up is complete send success/failure message to clinet machine
+        
+        //message should contain the users information for the clients profile when logged in
+        
+        //byte[] LoginStatus = returnMessage.getBytes();
+        //DatagramPacket sendPacket = new DatagramPacket(LoginStatus, LoginStatus.length, userIP, userPort);
+        //try{ socket.send(sendPacket); }catch(Exception e){System.err.println(e.getMessage());}
     }
     
     //recieves the data from the client for new user
     //and stores data in the database
-    protected int newUser(){
-        return 0;
+    private String newUser(String[] loginData){
+        String tableName = "Profiles";
+        String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage)";
+        //String Values = "('" + userID + "', '" + loginData[2] + "', '" + loginData[3] + "', '" + loginData[4] + "', " + loginData[5] + ")";
+        return "Error";
     }
     //recieves the data from the client for returning user
     //checks user credentials
     //adds IPaddress to active users table in DB
-    protected int returningUser(){
-        return 0;
+    private String returningUser(String ID){
+        //get resultset of userName data from the databse
+        String value = "*";
+        String table = "Profiles";
+        String Condition = "Username = '" + ID + "'";
+        ResultSet result = dataChange.GetRecord(value, table, Condition);
+        
+        try{
+            //if result isn't null then it must have found a user, therefor login is correct
+            if(result != null){
+                //after credentials checked create friends list and send it to user
+                String friendsList = "FriendsList" + GetFriends(result.getInt("User_ID"));
+                sendToUser(friendsList);
+                //send list of recieved but not accepted friend requests
+                
+                //after credentials checked, friend lsit sent - create and send messageBoard Messages
+                
+                //create list of active users and send to clinet
+                
+                
+                
+                
+                //return loginInfo;
+            }
+        }catch(Exception e){System.err.println(e.getMessage());}
+        
+        return "Error: No matching user!";//error - no user matches provided userName
+    }
+    //returns the list of a users friends
+    private String GetFriends(int UserID){
+        String friends = null;
+        
+        //get a list of all the users frinds
+        String Value = "User_ID, Friend_ID";
+        String Table = "Friends";
+        String Condition = "User_ID = " + UserID + " OR Friend_ID = " + UserID;
+        ResultSet result = dataChange.GetRecord(Value, Table, Condition);
+        
+        try{
+            //loop through each friend
+            while(result.next()){
+                //test if this is friendsID or current users ID
+                if(result.getInt("User_ID") != UserID){ 
+                    friends += "," + getUserName(result.getInt("User_ID"));
+                }
+                else{
+                    friends += "," + getUserName(result.getInt("Friend_ID"));
+                }
+            }
+        }catch(Exception e){System.err.println(e.getMessage());}
+        
+        //either null (for no friends) or a list of comma seporated friend userNames should be returned
+        return friends;
+    }
+    //returns userName from userID
+    private String getUserName(int userID){
+        String userName = null;
+        String val = "UserName";
+        String table = "Profiles";
+        String condition = "User_ID" + userID;
+        ResultSet result = dataChange.GetRecord(val, table, condition);
+        try{
+            userName = result.getString("UserName");
+        }catch(Exception e){System.err.println(e.getMessage());}
+        return userName;
+    }
+
+    //returns all the messageBoard Messages from users friends
+    private String getMessageBoardItems(){
+        return "";
     }
     
+    
     //should remove users IPaddress and info from active users table (Members table)
-    protected void logOff(){
-        String SQLStatement = "delete from Members where IPAddress = " + userIP; //should clear the row in the DB table for clients IP
-        DBInteractions dataChange = new DBInteractions();
-        //dataChange.EditData(SQLStatement);
+    //removes any messages the user has put on the message board while
+    private void logOff(){
+        //call function to clear users message board messages
+        //uses IPadress so needs calling before clearing users IP
+        removeUserMessageBoardMessages();
+        
+        String tableToEdit = "Members";//members table is the table which stores active members
+        String conditionForEdit = "IPAddress = " + userIP; // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
+
+        //also remove users messages from the message board
+        
+        dataChange.DeleteRecord(tableToEdit, conditionForEdit);
+    }
+    private void removeUserMessageBoardMessages(){
+        //from users IP get users ID
+        String selectVals = "User_ID";
+        String selectTable = "Members";
+        String SelectCondition = "IPAddress = " + userIP;
+        ResultSet result = dataChange.GetRecord(selectVals, selectTable, SelectCondition);
+        
+        try{
+            //use users ID to remove any messages they have posted on the message board
+            String removeTable = "MessageBoard";
+            String removeCondition = "User_ID = " + result.getInt("User_ID");
+            dataChange.DeleteRecord(removeTable, removeCondition);
+        }catch(Exception e){System.err.println(e.getMessage());}
     }
 }

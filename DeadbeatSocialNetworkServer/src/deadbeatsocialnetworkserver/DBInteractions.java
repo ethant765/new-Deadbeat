@@ -50,8 +50,6 @@ public class DBInteractions {
         }
         return EditData(SQLQuery, "select");
     }
-
-    
     
     //will update,add,remove, fetch data from DB
     //dependant on String passed
