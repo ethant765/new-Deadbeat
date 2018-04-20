@@ -8,6 +8,7 @@ package deadbeatsocialnetworkserver;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
+import org.json.*;
 
 /**
  *
@@ -55,50 +56,41 @@ public class UserThread implements Runnable{
             
         }
         else if(String.valueOf(headers.SHARESONG).equals(messageParts[0])){ 
-
+            shareSong();
         }
         else if(String.valueOf(headers.UPDATEACTIVEUSERS).equals(messageParts[0])){
-            
+            sendToUser(updateActiveUsers());
         }
         else if(String.valueOf(headers.RECIEVEFRIENDSSHAREDSONGS).equals(messageParts[0])){
-            
+            sendToUser(friendsSharedSongs());
         }
         else if(String.valueOf(headers.RECIEVEUSERSSHAREDSONGS).equals(messageParts[0])){
-            
+            sendToUser(usersSharedSongs());
         }
         else if(String.valueOf(headers.RECIEVESIMILARPROFILES).equals(messageParts[0])){
-                
+            sendToUser(similarProfiles());
         }
         else if(String.valueOf(headers.UPDATEMESSAGEBOARD).equals(messageParts[0])){
-            
+            sendToUser(updateMessageBoard());
         }
         else if(String.valueOf(headers.ADDTOMESSAGEBOARD).equals(messageParts[0])){
-            
+            addToMessageBoard();
         }
         else if(String.valueOf(headers.UPDATEFRIENDREQUESTS).equals(messageParts[0])){
-            
+            sendToUser(updateFriendRequests());
         }
         else if(String.valueOf(headers.FRIENDSLIST).equals(messageParts[0])){
-            
+            sendToUser(FriendsList(0)); //int clients userID
         }
         else if(String.valueOf(headers.SENDFRIENDREQUEST).equals(messageParts[0])){
-            
+            sendFriendRequest();
         }
         else if(String.valueOf(headers.CHANGEFRIENDREQUESTSTATUS).equals(messageParts[0])){
-            
+            changeFriendRequestStatus();
         }
         else{
             //error
         }
-    }
-    
-    //function used to return data to the client
-    private void sendToUser(String message){
-        try{
-            byte[] data = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
-            socket.send(sendPacket);
-        }catch(Exception e){System.err.println(e.getMessage());}
     }
     
     //used to split recieved strings into their indervidual tokens
@@ -112,6 +104,27 @@ public class UserThread implements Runnable{
         }
         return holder;
     }
+    
+
+    //function used to return data to the client
+    private void sendToUser(ResultSet sendData){
+        try{
+            JSONArray jArray = new JSONArray();
+            resultSetToJson convert = new resultSetToJson();
+            
+            //use function which converts database resultset to JSONArray
+            jArray = convert.convertToJSON(sendData);
+            
+            //convert JSONArray to strng
+            String message = jArray.toString();
+            
+            //convert string to bytes ready to send to client
+            byte[] data = message.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
+            socket.send(sendPacket);
+        }catch(Exception e){System.err.println(e.getMessage());}
+    }
+
     //returns userName from userID
     private String getUserName(int userID){
         String userName = null;
@@ -127,6 +140,8 @@ public class UserThread implements Runnable{
     
     
     
+    
+    //-----------------------------login and log off functions---------------------------------
     
     //recieves the data from the client for new user
     //and stores data in the database
@@ -150,16 +165,14 @@ public class UserThread implements Runnable{
             //if result isn't null then it must have found a user, therefor login is correct
             if(result != null){
                 //after credentials checked create friends list and send it to user
-                String friendsList = "FriendsList" + GetFriends(result.getInt("User_ID"));
-                sendToUser(friendsList);
+                
+                //send list of friends to the user
+                
                 //send list of recieved but not accepted friend requests
                 
                 //after credentials checked, friend lsit sent - create and send messageBoard Messages
                 
                 //create list of active users and send to clinet
-                
-                
-                
                 
                 //return loginInfo;
             }
@@ -168,9 +181,85 @@ public class UserThread implements Runnable{
         return "Error: No matching user!";//error - no user matches provided userName
     }
     
+    //should remove users IPaddress and info from active users table (Members table)
+    //removes any messages the user has put on the message board while
+    private void logOff(){
+        //call function to clear users message board messages
+        //uses IPadress so needs calling before clearing users IP
+        removeUserMessageBoardMessages();
+        
+        String tableToEdit = "Members";//members table is the table which stores active members
+        String conditionForEdit = "IPAddress = " + userIP; // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
+
+        //also remove users messages from the message board
+        
+        dataChange.DeleteRecord(tableToEdit, conditionForEdit);
+    }
+    //when user logs off removes any messages which they put on the message board
+    private void removeUserMessageBoardMessages(){
+        //from users IP get users ID
+        String selectVals = "User_ID";
+        String selectTable = "Members";
+        String SelectCondition = "IPAddress = " + userIP;
+        ResultSet result = dataChange.GetRecord(selectVals, selectTable, SelectCondition);
+        
+        try{
+            //use users ID to remove any messages they have posted on the message board
+            String removeTable = "MessageBoard";
+            String removeCondition = "User_ID = " + result.getInt("User_ID");
+            dataChange.DeleteRecord(removeTable, removeCondition);
+        }catch(Exception e){System.err.println(e.getMessage());}
+    }
     
-    //returns the list of a users friends
-    private String GetFriends(int UserID){
+    
+    
+    
+    
+    
+    //-------------------------------------------enum functions-----------------------------------------------------
+    //allows the client to share a song
+    private void shareSong(){
+        
+    }
+    
+    //sends client list of all currently online users
+    private ResultSet updateActiveUsers(){
+        return null;
+    }
+    
+    //sends the client a list of songs shared by their friends
+    private ResultSet friendsSharedSongs(){
+        return null;
+    }
+    
+    //sends the client a list of their shared songs
+    private ResultSet usersSharedSongs(){
+        return null;
+    }
+    
+    //sends the client a list of all other profiles with similar music preferences
+    private ResultSet similarProfiles(){
+        return null;
+    }
+    
+    //sends an up-to-date message board to the clinet
+    private ResultSet updateMessageBoard(){
+        return null;
+    }
+    
+    //adds the users message to the message board for their friends to see
+    private void addToMessageBoard(){
+        
+    }
+    
+    //sends a list to the client of all their friend requests
+    private ResultSet updateFriendRequests(){
+        return null;
+    }
+    
+    
+    //sends a list to the client of their friends - (friendsID and friends userName)
+    private ResultSet FriendsList(int UserID){
         String friends = null;
         
         //get a list of all the users frinds
@@ -192,37 +281,16 @@ public class UserThread implements Runnable{
             }
         }catch(Exception e){System.err.println(e.getMessage());}
         
-        //either null (for no friends) or a list of comma seporated friend userNames should be returned
-        return friends;
+        return null;
     }
     
-    
-    //should remove users IPaddress and info from active users table (Members table)
-    //removes any messages the user has put on the message board while
-    private void logOff(){
-        //call function to clear users message board messages
-        //uses IPadress so needs calling before clearing users IP
-        removeUserMessageBoardMessages();
+    //allows the client to send a friend request to another user who isn't already their friend
+    private void sendFriendRequest(){
         
-        String tableToEdit = "Members";//members table is the table which stores active members
-        String conditionForEdit = "IPAddress = " + userIP; // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
-
-        //also remove users messages from the message board
-        
-        dataChange.DeleteRecord(tableToEdit, conditionForEdit);
     }
-    private void removeUserMessageBoardMessages(){
-        //from users IP get users ID
-        String selectVals = "User_ID";
-        String selectTable = "Members";
-        String SelectCondition = "IPAddress = " + userIP;
-        ResultSet result = dataChange.GetRecord(selectVals, selectTable, SelectCondition);
+    
+    //chanegs the status of a friend request (accept or reject)
+    private void changeFriendRequestStatus(){
         
-        try{
-            //use users ID to remove any messages they have posted on the message board
-            String removeTable = "MessageBoard";
-            String removeCondition = "User_ID = " + result.getInt("User_ID");
-            dataChange.DeleteRecord(removeTable, removeCondition);
-        }catch(Exception e){System.err.println(e.getMessage());}
     }
 }

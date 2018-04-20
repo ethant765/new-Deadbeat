@@ -11,18 +11,18 @@ package deadbeatsocialnetworkserver;
  */
 public enum dataHeader {
     //function: handles new user creation
-    //Data Needed: "UserID,UserName,PlaceOfBirth,DOB,ProfileImage" UserID is PK integer in database
-    //Data returned: "ActiveUsersList"
+    //Data Needed: "UserID,UserName,PlaceOfBirth,DOB,ProfileImage" - UserID is PK integer in database
+    //Data returned: UPDATEACTIVEUSERS function
     LOGINNEWUSER,
     
     //function: handles existing user logon
     //Data Needed: "UserID"
-    //Data returned: 6 Strings:- "ActiveUsersList" + "FriendsList" + "FriendRequests" + "FriendsSharedSongs" + "UsersSharedSongs" + "MessageBoardMessages"
+    //Data returned: sends client info from functions: UPDATEACTIVEUSERS + FRIENDSLIST + UPDATEFRIENDREQUESTS + RECIEVEFRIENDSSHAREDSONGS + RECIEVEUSERSSHAREDSONGS + UPDATEMESSAGEBOARD
     LOGINEXISTINGUSER,
     
     //function: handles user log off - removes users IPaddress and messages from message board
     //Data Needed: logoff header
-    //Data returned: "Confirmation message"
+    //Data returned: 
     LOGOFF,//implimented
     
     
@@ -36,7 +36,7 @@ public enum dataHeader {
     
     //function: sends the client a list of all the currently online users
     //Data Needed: header
-    //Data returned: 
+    //Data returned: List of userIDs, and userNames for online users
     UPDATEACTIVEUSERS,
     
     //function: sends user list of songs they have shared
