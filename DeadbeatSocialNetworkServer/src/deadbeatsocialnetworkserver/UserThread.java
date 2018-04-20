@@ -45,27 +45,46 @@ public class UserThread implements Runnable{
         String messageParts[] = SplitString(Message);
         
         
-        if(String.valueOf(headers.updateInfo).equals(messageParts[0])){
-            //update messageboard info, update active users list, recieve new friend request notifications, recieve friends request acceptance notifications
+        if(String.valueOf(headers.LoginNewUser).equals(messageParts[0])){
+           
+        }
+        else if(String.valueOf(headers.LoginExistingUser).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.LogOff).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.ShareSong).equals(messageParts[0])){ 
+
+        }
+        else if(String.valueOf(headers.UpdateActiveUsers).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.RecieveFriendsSharedSongs).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.RecieveUsersSharedSongs).equals(messageParts[0])){
+            
         }
         else if(String.valueOf(headers.RecieveSimilarProfiles).equals(messageParts[0])){
-            //list of users with similar music preferences sent back to the user
+                
         }
-        else if(String.valueOf(headers.recieveFriendsSharedSongs).equals(messageParts[0])){
-            //request a friends shared song from, song returned to user
+        else if(String.valueOf(headers.UpdateMessageBoard).equals(messageParts[0])){
+            
         }
-        else if(String.valueOf(headers.logOff).equals(messageParts[0])){ 
-            //sent string for log off only requires header vals
-            //as IP address is used for log off this can be retrieved server side
-            logOff();
+        else if(String.valueOf(headers.AddToMessageBoard).equals(messageParts[0])){
+            
         }
-        else if(String.valueOf(headers.login).equals(messageParts[0])){
-            //handles the login for the client
-            //For exisint user:         sent string requries header, boolean isExistingUser = true, userName    - in that order
-            //For new user:             sent string requires header, boolean isExistingUser = false, UserName, PlaceOfBirth, DOB, ProfileImage BLOB DATA        - in that order
-            LoginHandler(messageParts);
+        else if(String.valueOf(headers.UpdateFriendRequests).equals(messageParts[0])){
+            
         }
-        else if(String.valueOf(headers.addToMessageBoard).equals(messageParts[0])){
+        else if(String.valueOf(headers.FriendsList).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.SendFriendRequest).equals(messageParts[0])){
+            
+        }
+        else if(String.valueOf(headers.ChangeFriendRequestStatus).equals(messageParts[0])){
             
         }
         else{
@@ -93,28 +112,21 @@ public class UserThread implements Runnable{
         }
         return holder;
     }
-    
-    //deals with the login and new users when client first connects to server
-    private void LoginHandler(String[] loginData){
-        boolean existingUser = Boolean.valueOf(loginData[1]);
-        String returnMessage;
-        
-        if(existingUser == true){
-            returnMessage = returningUser(loginData[2]);
-        }
-        else{
-            returnMessage = newUser(loginData);
-        }
-        
-        
-        //once login/sign up is complete send success/failure message to clinet machine
-        
-        //message should contain the users information for the clients profile when logged in
-        
-        //byte[] LoginStatus = returnMessage.getBytes();
-        //DatagramPacket sendPacket = new DatagramPacket(LoginStatus, LoginStatus.length, userIP, userPort);
-        //try{ socket.send(sendPacket); }catch(Exception e){System.err.println(e.getMessage());}
+    //returns userName from userID
+    private String getUserName(int userID){
+        String userName = null;
+        String val = "UserName";
+        String table = "Profiles";
+        String condition = "User_ID" + userID;
+        ResultSet result = dataChange.GetRecord(val, table, condition);
+        try{
+            userName = result.getString("UserName");
+        }catch(Exception e){System.err.println(e.getMessage());}
+        return userName;
     }
+    
+    
+    
     
     //recieves the data from the client for new user
     //and stores data in the database
@@ -155,6 +167,8 @@ public class UserThread implements Runnable{
         
         return "Error: No matching user!";//error - no user matches provided userName
     }
+    
+    
     //returns the list of a users friends
     private String GetFriends(int UserID){
         String friends = null;
@@ -180,23 +194,6 @@ public class UserThread implements Runnable{
         
         //either null (for no friends) or a list of comma seporated friend userNames should be returned
         return friends;
-    }
-    //returns userName from userID
-    private String getUserName(int userID){
-        String userName = null;
-        String val = "UserName";
-        String table = "Profiles";
-        String condition = "User_ID" + userID;
-        ResultSet result = dataChange.GetRecord(val, table, condition);
-        try{
-            userName = result.getString("UserName");
-        }catch(Exception e){System.err.println(e.getMessage());}
-        return userName;
-    }
-
-    //returns all the messageBoard Messages from users friends
-    private String getMessageBoardItems(){
-        return "";
     }
     
     
