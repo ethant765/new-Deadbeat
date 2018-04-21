@@ -46,43 +46,43 @@ public class UserThread implements Runnable{
         String messageParts[] = SplitString(Message);
         
         
-        if(String.valueOf(headers.LOGINNEWUSER).equals(messageParts[0])){
+        if(String.valueOf(headers.LOGIN_NEW_USER).equals(messageParts[0])){
            
         }
-        else if(String.valueOf(headers.LOGINEXISTINGUSER).equals(messageParts[0])){
+        else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.LOGOFF).equals(messageParts[0])){
+        else if(String.valueOf(headers.LOG_OFF).equals(messageParts[0])){
             
         }
-        else if(String.valueOf(headers.SHARESONG).equals(messageParts[0])){ 
+        else if(String.valueOf(headers.SHARE_SONG).equals(messageParts[0])){ 
             shareSong();
         }
-        else if(String.valueOf(headers.UPDATEACTIVEUSERS).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(messageParts[0])){
             sendToUser(updateActiveUsers(0)); //int clients user_ID
         }
-        else if(String.valueOf(headers.SHAREDSONGSLIST).equals(messageParts[0])){
+        else if(String.valueOf(headers.SHARED_SONGS_LIST).equals(messageParts[0])){
             sendToUser(SharedSongsList(0)); //int user_ID (could be user or friends ID)
         }
-        else if(String.valueOf(headers.RECIEVESIMILARPROFILES).equals(messageParts[0])){
+        else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(messageParts[0])){
             sendToUser(similarProfiles());
         }
-        else if(String.valueOf(headers.UPDATEMESSAGEBOARD).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(messageParts[0])){
             sendToUser(updateMessageBoard());
         }
-        else if(String.valueOf(headers.ADDTOMESSAGEBOARD).equals(messageParts[0])){
+        else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(messageParts[0])){
             addToMessageBoard();
         }
-        else if(String.valueOf(headers.UPDATEFRIENDREQUESTS).equals(messageParts[0])){
+        else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(messageParts[0])){
             sendToUser(updateFriendRequests(0)); //int clients user_ID
         }
-        else if(String.valueOf(headers.FRIENDSLIST).equals(messageParts[0])){
+        else if(String.valueOf(headers.FRIENDS_LIST).equals(messageParts[0])){
             sendToUser(FriendsList(0)); //int clients user_ID
         }
-        else if(String.valueOf(headers.SENDFRIENDREQUEST).equals(messageParts[0])){
+        else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(messageParts[0])){
             sendFriendRequest();
         }
-        else if(String.valueOf(headers.CHANGEFRIENDREQUESTSTATUS).equals(messageParts[0])){
+        else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(messageParts[0])){
             changeFriendRequestStatus();
         }
         else{
