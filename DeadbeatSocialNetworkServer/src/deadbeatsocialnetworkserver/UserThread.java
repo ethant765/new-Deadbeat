@@ -5,10 +5,10 @@
  */
 package deadbeatsocialnetworkserver;
 
+import Composers.JSON;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
-import org.json.*;
 
 /**
  *
@@ -106,14 +106,13 @@ public class UserThread implements Runnable{
     //function used to return data to the client
     private void sendToUser(ResultSet sendData){
         try{
-            JSONArray jArray = new JSONArray();
-            resultSetToJson convert = new resultSetToJson();
+            JSON jobject = new JSON();
             
-            //use function which converts database resultset to JSONArray
-            jArray = convert.convertToJSON(sendData);
+            //use function which converts database resultset to JSON
+            jobject.fromResultSet(sendData);
             
             //convert JSONArray to strng
-            String message = jArray.toString();
+            String message = jobject.toString();
             
             //convert string to bytes ready to send to client
             byte[] data = message.getBytes();
