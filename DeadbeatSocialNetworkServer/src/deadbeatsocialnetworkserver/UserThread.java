@@ -65,7 +65,7 @@ public class UserThread implements Runnable{
             sendToUser(SharedSongsList(0)); //int user_ID (could be user or friends ID)
         }
         else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(messageParts[0])){
-            sendToUser(similarProfiles());
+            sendToUser(similarProfiles(0)); //int clients user_ID
         }
         else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(messageParts[0])){
             sendToUser(updateMessageBoard());
@@ -229,7 +229,7 @@ public class UserThread implements Runnable{
     private ResultSet similarProfiles(int userID){
         
         /*
-        SELECT Profiles.User_ID, Profiles_UserName
+        SELECT Profiles.User_ID, Profiles.UserName
         FROM Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID
         WHERE
         */
