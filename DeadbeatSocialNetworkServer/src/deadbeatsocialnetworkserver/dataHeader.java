@@ -39,15 +39,10 @@ public enum dataHeader {
     //Data returned: List of userIDs, and userNames for online users
     UPDATEACTIVEUSERS,
     
-    //function: sends user list of songs they have shared
-    //Data Needed: "userID"
+    //function: client sends a user_ID (could be that of a friend or themselves) then function returns all that users shared songs
+    //Data Needed: "userID" - friends_ID or clients_ID
     //Data returned: "numberOfSharedSongs" + ("SharedSongID,SongName,Artist,ReleaseDate,Album,Song" * number of shared songs)
-    RECIEVEUSERSSHAREDSONGS,
-    
-    //function: returns songs shared by friends
-    //Data Needed: "UserID"
-    //Data returned: "NumOfSongs" + ("friendsID,SongID,SongName,Artist,ReleaseDate,Album,Song" * numOfSongs)
-    RECIEVEFRIENDSSHAREDSONGS,
+    SHAREDSONGSLIST,
     
     //function: returns a list of profiles with the same music preferences 
     //Data Needed: "UserID"

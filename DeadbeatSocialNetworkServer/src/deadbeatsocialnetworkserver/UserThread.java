@@ -59,13 +59,10 @@ public class UserThread implements Runnable{
             shareSong();
         }
         else if(String.valueOf(headers.UPDATEACTIVEUSERS).equals(messageParts[0])){
-            sendToUser(updateActiveUsers());
+            sendToUser(updateActiveUsers(0)); //int clients user_ID
         }
-        else if(String.valueOf(headers.RECIEVEFRIENDSSHAREDSONGS).equals(messageParts[0])){
-            sendToUser(friendsSharedSongs());
-        }
-        else if(String.valueOf(headers.RECIEVEUSERSSHAREDSONGS).equals(messageParts[0])){
-            sendToUser(usersSharedSongs());
+        else if(String.valueOf(headers.SHAREDSONGSLIST).equals(messageParts[0])){
+            sendToUser(SharedSongsList(0)); //int user_ID (could be user or friends ID)
         }
         else if(String.valueOf(headers.RECIEVESIMILARPROFILES).equals(messageParts[0])){
             sendToUser(similarProfiles());
@@ -77,10 +74,10 @@ public class UserThread implements Runnable{
             addToMessageBoard();
         }
         else if(String.valueOf(headers.UPDATEFRIENDREQUESTS).equals(messageParts[0])){
-            sendToUser(updateFriendRequests());
+            sendToUser(updateFriendRequests(0)); //int clients user_ID
         }
         else if(String.valueOf(headers.FRIENDSLIST).equals(messageParts[0])){
-            sendToUser(FriendsList(0)); //int clients userID
+            sendToUser(FriendsList(0)); //int clients user_ID
         }
         else if(String.valueOf(headers.SENDFRIENDREQUEST).equals(messageParts[0])){
             sendFriendRequest();
@@ -125,18 +122,6 @@ public class UserThread implements Runnable{
         }catch(Exception e){System.err.println(e.getMessage());}
     }
 
-    //returns userName from userID
-    private String getUserName(int userID){
-        String userName = null;
-        String val = "UserName";
-        String table = "Profiles";
-        String condition = "User_ID" + userID;
-        ResultSet result = dataChange.GetRecord(val, table, condition);
-        try{
-            userName = result.getString("UserName");
-        }catch(Exception e){System.err.println(e.getMessage());}
-        return userName;
-    }
     
     
     
@@ -223,22 +208,32 @@ public class UserThread implements Runnable{
     }
     
     //sends client list of all currently online users
-    private ResultSet updateActiveUsers(){
-        return null;
+    private ResultSet updateActiveUsers(int userID){
+        String select = "Members.User_ID, Profiles.UserName";
+        String from = "FROM Profiles RIGHT JOIN Members ON Profiles.User_ID = Members.User_ID";
+        String where = "WHERE Profiles.User_ID <> " + userID;
+        
+        return dataChange.GetRecord(select, from, where);
     }
     
-    //sends the client a list of songs shared by their friends
-    private ResultSet friendsSharedSongs(){
-        return null;
-    }
-    
-    //sends the client a list of their shared songs
-    private ResultSet usersSharedSongs(){
-        return null;
+    //sends the client a list of songs shared by their specified friends
+    private ResultSet SharedSongsList(int UserID){        
+        String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
+        String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
+        String where = "ProfileSharedSongs.USER_ID = " + UserID;
+        
+        return dataChange.GetRecord(select, from, where);
     }
     
     //sends the client a list of all other profiles with similar music preferences
-    private ResultSet similarProfiles(){
+    private ResultSet similarProfiles(int userID){
+        
+        /*
+        SELECT Profiles.User_ID, Profiles_UserName
+        FROM Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID
+        WHERE
+        */
+        
         return null;
     }
     
@@ -253,8 +248,12 @@ public class UserThread implements Runnable{
     }
     
     //sends a list to the client of all their friend requests
-    private ResultSet updateFriendRequests(){
-        return null;
+    private ResultSet updateFriendRequests(int userID){
+        String vals = "Profiles.User_ID, Profiles.UserName";
+        String tables = "Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID";
+        String condition = "Friends.Friend_ID =" + userID + "AND Status_ID = 'Wait'";
+        
+        return dataChange.GetRecord(vals, tables, condition);
     }
     
     
