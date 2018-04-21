@@ -9,6 +9,7 @@ import Composers.JSON;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
+import org.json.JSONArray;
 
 /**
  *
@@ -45,6 +46,7 @@ public class UserThread implements Runnable{
         String Message = new String(data);
         String messageParts[] = SplitString(Message);
         
+        //sendToUser(FriendsList(2)); //int clients user_ID
         
         if(String.valueOf(headers.LOGIN_NEW_USER).equals(messageParts[0])){
            
@@ -65,7 +67,7 @@ public class UserThread implements Runnable{
             sendToUser(SharedSongsList(0)); //int user_ID (could be user or friends ID)
         }
         else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(messageParts[0])){
-            sendToUser(similarProfiles(0)); //int clients user_ID
+            sendToUser(similarProfiles(1)); //int clients user_ID
         }
         else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(messageParts[0])){
             sendToUser(updateMessageBoard());
@@ -77,7 +79,7 @@ public class UserThread implements Runnable{
             sendToUser(updateFriendRequests(0)); //int clients user_ID
         }
         else if(String.valueOf(headers.FRIENDS_LIST).equals(messageParts[0])){
-            sendToUser(FriendsList(0)); //int clients user_ID
+            sendToUser(FriendsList(2)); //int clients user_ID
         }
         else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(messageParts[0])){
             sendFriendRequest(0,0); // clients userID and user ID for user recieveing friend request
@@ -106,18 +108,30 @@ public class UserThread implements Runnable{
     //function used to return data to the client
     private void sendToUser(ResultSet sendData){
         try{
-            JSON jobject = new JSON();
+            //JSON jobject = new JSON();
             
             //use function which converts database resultset to JSON
-            jobject.fromResultSet(sendData);
+            //jobject.fromResultSet(sendData); //fromResultSet function not working
             
             //convert JSONArray to strng
-            String message = jobject.toString();
+            //String message = jobject.toString();
+            
+           
+            
+            resultSetToJson test = new resultSetToJson();
+             JSONArray jArray = new JSONArray();
+             jArray = test.convertToJSON(sendData);
+             String message = jArray.toString();
+             
+             
             
             //convert string to bytes ready to send to client
             byte[] data = message.getBytes();
             DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
             socket.send(sendPacket);
+            
+            testFunction(message);
+            
         }catch(Exception e){System.err.println(e.getMessage());}
     }
 
@@ -299,6 +313,22 @@ public class UserThread implements Runnable{
                " AND Friends.Status_ID = 'con')";
 
         return dataChange.GetCustomRecord(sqlCmd);
+    }
+    
+    private void testFunction(String testing){
+        String testing2 = null;
+        JSON test = new JSON();
+        testing2 = test.getWrappedChars(testing,"[","]");
+        testing2 += "}";
+        
+        System.out.println(testing2);
+        
+        test.fromString(testing2);
+        String name = test.get("USERNAME");
+        
+        int id = Integer.getInteger(test.get("USER_ID"));
+        
+        System.out.println(name + ", " + id);
     }
     
 }

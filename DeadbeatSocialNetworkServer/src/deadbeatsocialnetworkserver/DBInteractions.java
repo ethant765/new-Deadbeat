@@ -60,7 +60,7 @@ public class DBInteractions {
             conn = DriverManager.getConnection(SQLPath);
             stmt = conn.createStatement();
             
-            if(SQLCommand == "select"){
+            if("select".equals(SQLCommand)){
                 res = stmt.executeQuery(SQLQuery);
             }
             else{

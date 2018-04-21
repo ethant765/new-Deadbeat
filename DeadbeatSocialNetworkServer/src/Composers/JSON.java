@@ -61,8 +61,9 @@ public class JSON {
     private String[] splitOutsideString(String content,char splitter){
         return splitOutsideString(content,splitter,true);
     }
-    
-    private String getWrappedChars(String content,String fromFirst,String toLast){
+   
+    //made public for test
+    public String getWrappedChars(String content,String fromFirst,String toLast){
         content = content.trim();
         if ((fromFirst == null ? toLast == null : fromFirst.equals(toLast)) && "".equals(fromFirst)){
             return content;
