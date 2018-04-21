@@ -83,7 +83,7 @@ public class UserThread implements Runnable{
             sendFriendRequest(0,0); // clients userID and user ID for user recieveing friend request
         }
         else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(messageParts[0])){
-            changeFriendRequestStatus(0,0,true); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
+            updateFriendRequestStatus(0,0,true); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
         }
         else{
             //error
@@ -215,7 +215,7 @@ public class UserThread implements Runnable{
     }
     
     //chanegs the status of a friend request (accept or reject)
-    private void changeFriendRequestStatus(int clientUserID, int FriendRequestUserID, boolean accepted){
+    private void updateFriendRequestStatus(int clientUserID, int FriendRequestUserID, boolean accepted){
         String newStatus;
         if(accepted == true)
             newStatus = "con"; //connected

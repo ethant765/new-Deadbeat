@@ -26,6 +26,61 @@ public class JSON {
         return content.startsWith("\"") && content.endsWith("\"");
     }
     
+    private String getWrappedChars(String content){
+        return getWrappedChars(content,"","");
+    }
+    
+    private String[] splitOutsideString(String content,char splitter,boolean includeQuote){
+    
+        String[] res = {};
+        boolean stringIsOpen = false;
+        String stringSoFar = "";
+        
+        for (char c : content.toCharArray()) {
+            
+            if ( c == '"' ){
+                stringIsOpen = !stringIsOpen;
+            }
+            
+            if ( c == splitter && stringIsOpen == false ){
+                res[res.length] = stringSoFar;
+                stringSoFar = "";
+            }
+            else{
+                if ( ( c == '"' && includeQuote == true ) || c != '"' ){
+                    stringSoFar += String.valueOf(c);
+                }
+            }
+            
+        }
+        
+        return res;
+        
+    }
+    
+    private String[] splitOutsideString(String content,char splitter){
+        return splitOutsideString(content,splitter,true);
+    }
+    
+    private String getWrappedChars(String content,String fromFirst,String toLast){
+        content = content.trim();
+        if ((fromFirst == null ? toLast == null : fromFirst.equals(toLast)) && "".equals(fromFirst)){
+            return content;
+        }
+        else if ( !content.startsWith(fromFirst) || !content.endsWith(toLast) ){
+            return null;
+        }
+        else{
+            return content.substring(1, content.length() - 2);
+        }
+    }
+    
+    private String[] getAsArrayTypedStrings(String content){
+        String inputString = content.trim();
+        String[] parts = splitOutsideString( getWrappedChars(inputString,"[","]") , ',' );
+        return parts;
+    }
+    
     private String getStoredContentString(String rawContent){
         if (isTypeString(rawContent)) {
             rawContent = rawContent.trim();
@@ -79,12 +134,22 @@ public class JSON {
     public String toString(){
         String res = "{\n";
         for (String prop : props) {
-            res += prop + "\n";
+            res += prop + ",\n";
         }
         return res + "}";
     }
     
     public void fromString(String string){
+        
+        String inputString = string.trim();
+        
+        //check if json_string root is an array
+        String[] parts = splitOutsideString( getWrappedChars(string,"{","}") , ',' );
+        
+        for (String part : parts){
+            // split str by ":" and set
+            set ( getWrappedChars(part.split(":")[0],"\"","\"") , part.split(":")[1] );
+        }
         
     }
     
