@@ -49,7 +49,7 @@ public enum dataHeader {
     //Data returned: "numOfProfiles" + ("SimilarProfileUserId,UserName" * numOfUsers)
     RECIEVE_SIMILAR_PROFILES,
     
-    //function: sends the client a list of messages by current user and their friends on the messageBoard
+    //function: sends the client the up-to-date message board
     //Data Needed: "UserID"
     //Data returned: "numOfMessages" + ("messageByUserName,MessageTitle,Message" * numOfMessages)
     UPDATE_MESSAGE_BOARD, 

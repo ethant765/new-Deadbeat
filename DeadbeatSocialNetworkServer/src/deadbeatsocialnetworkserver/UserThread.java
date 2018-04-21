@@ -202,8 +202,29 @@ public class UserThread implements Runnable{
     
     //-------------------------------------------enum functions-----------------------------------------------------
     //allows the client to share a song
-    private void shareSong(){
+    private void shareSong(int userID, int songID, String songName, String Artist, Date ReleaseDate, String Album/*Blob Song*/){
         
+    }
+    
+    //allows the client to send a friend request to another user who isn't already their friend
+    private void sendFriendRequest(int clientUserID, int otherUsersID){
+        String table = "Friends";
+        String cols = "(User_ID, Friend_ID, Status_ID)";
+        String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
+        dataChange.InsertRecord(table, cols, vals);
+    }
+    
+    //chanegs the status of a friend request (accept or reject)
+    private void changeFriendRequestStatus(){
+        
+    }
+        
+    //adds the users message to the message board for their friends to see
+    private void addToMessageBoard(int userID, String title, String message){
+        String table = "MessageBoard";
+        String cols = "(User_ID, MessageTitle, Messages)";
+        String vals = "(" + userID + ", '" + title + "', '" + message + "')";
+        dataChange.InsertRecord(table, cols, vals);
     }
     
     //sends client list of all currently online users
@@ -226,24 +247,23 @@ public class UserThread implements Runnable{
     
     //sends the client a list of all other profiles with similar music preferences
     private ResultSet similarProfiles(int userID){
+        String sqlCmd = "select Profiles.User_ID, Profiles.UserName " +
+                "from Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID " +
+                "where ProfileMusicPreferences.User_ID <> " + userID +
+                " AND ProfileMusicPreferences.MusicType_ID IN ( " +
+                "select MusicType_ID " +
+                "from ProfileMusicPreferences " +
+                "where User_ID = " + userID + ")";
         
-        /*
-        SELECT Profiles.User_ID, Profiles.UserName
-        FROM Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID
-        WHERE
-        */
-        
-        return null;
+        return dataChange.GetCustomRecord(sqlCmd);
     }
     
     //sends an up-to-date message board to the clinet
-    private ResultSet updateMessageBoard(){
-        return null;
-    }
-    
-    //adds the users message to the message board for their friends to see
-    private void addToMessageBoard(){
+    private ResultSet updateMessageBoard(){        
+        String vals = "Profiles.User_ID, Profiles.UserName, MessageBoard.MessageTitle, MessageBoard.Message";
+        String tables = "Profiles LEFT JOIN MessageBoard ON Profiles.User_ID = MessageBoard.User_ID";
         
+        return dataChange.GetRecord(vals, tables, null);
     }
     
     //sends a list to the client of all their friend requests
@@ -271,13 +291,4 @@ public class UserThread implements Runnable{
         return dataChange.GetCustomRecord(sqlCmd);
     }
     
-    //allows the client to send a friend request to another user who isn't already their friend
-    private void sendFriendRequest(){
-        
-    }
-    
-    //chanegs the status of a friend request (accept or reject)
-    private void changeFriendRequestStatus(){
-        
-    }
 }
