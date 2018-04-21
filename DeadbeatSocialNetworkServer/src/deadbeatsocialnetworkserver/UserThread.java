@@ -56,7 +56,7 @@ public class UserThread implements Runnable{
             
         }
         else if(String.valueOf(headers.SHARE_SONG).equals(messageParts[0])){ 
-            shareSong();
+            //shareSong();
         }
         else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(messageParts[0])){
             sendToUser(updateActiveUsers(0)); //int clients user_ID
@@ -71,7 +71,7 @@ public class UserThread implements Runnable{
             sendToUser(updateMessageBoard());
         }
         else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(messageParts[0])){
-            addToMessageBoard();
+            addToMessageBoard(0 , "x", "y"); //userID, messageTitle, Message
         }
         else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(messageParts[0])){
             sendToUser(updateFriendRequests(0)); //int clients user_ID
@@ -80,10 +80,10 @@ public class UserThread implements Runnable{
             sendToUser(FriendsList(0)); //int clients user_ID
         }
         else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(messageParts[0])){
-            sendFriendRequest();
+            sendFriendRequest(0,0); // clients userID and user ID for user recieveing friend request
         }
         else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(messageParts[0])){
-            changeFriendRequestStatus();
+            changeFriendRequestStatus(0,0,true); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
         }
         else{
             //error
@@ -215,8 +215,17 @@ public class UserThread implements Runnable{
     }
     
     //chanegs the status of a friend request (accept or reject)
-    private void changeFriendRequestStatus(){
+    private void changeFriendRequestStatus(int clientUserID, int FriendRequestUserID, boolean accepted){
+        String newStatus;
+        if(accepted == true)
+            newStatus = "con"; //connected
+        else
+            newStatus = "ref"; //refused
         
+        String table = "Friends";
+        String valChange = "Status_ID = '" + newStatus + "'";
+        String condition = "User_ID = " + FriendRequestUserID + " AND Friend_ID = " + clientUserID;
+         dataChange.UpdateRecord(table, valChange, condition);
     }
         
     //adds the users message to the message board for their friends to see
