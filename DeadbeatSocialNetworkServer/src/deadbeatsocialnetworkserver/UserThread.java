@@ -318,10 +318,10 @@ public class UserThread implements Runnable{
     private void testFunction(String testing){
         String testing2 = null;
         JSON test = new JSON();
+        System.out.println("testing => "+testing);
         testing2 = test.getWrappedChars(testing,"[","]");
-        testing2 += "}";
         
-        System.out.println(testing2);
+        System.out.println("testing2 => " + testing2);
         
         test.fromString(testing2);
         String name = test.get("USERNAME");
