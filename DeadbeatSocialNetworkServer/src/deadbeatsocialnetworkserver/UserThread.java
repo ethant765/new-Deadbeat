@@ -53,7 +53,7 @@ public class UserThread implements Runnable{
             
         }
         else if(String.valueOf(headers.LOG_OFF).equals(messageParts[0])){
-            
+            logOff();
         }
         else if(String.valueOf(headers.SHARE_SONG).equals(messageParts[0])){ 
             //shareSong();
@@ -135,14 +135,16 @@ public class UserThread implements Runnable{
         //String Values = "('" + userID + "', '" + loginData[2] + "', '" + loginData[3] + "', '" + loginData[4] + "', " + loginData[5] + ")";
         return "Error";
     }
+    
+    
     //recieves the data from the client for returning user
     //checks user credentials
     //adds IPaddress to active users table in DB
-    private String returningUser(String ID){
+    private void returningUser(int ID){
         //get resultset of userName data from the databse
         String value = "*";
         String table = "Profiles";
-        String Condition = "Username = '" + ID + "'";
+        String Condition = "User_ID = " + ID ;
         ResultSet result = dataChange.GetRecord(value, table, Condition);
         
         try{
@@ -150,20 +152,19 @@ public class UserThread implements Runnable{
             if(result != null){
                 //after credentials checked create friends list and send it to user
                 
-                //send list of friends to the user
+                //send list of friends to the user - ResultSet FriendsList(int UserID)
                 
-                //send list of recieved but not accepted friend requests
+                //send list of recieved but not accepted friend requests - ResultSet updateFriendRequests(int userID)
                 
-                //after credentials checked, friend lsit sent - create and send messageBoard Messages
+                //send list of messageboard items - ResultSet updateMessageBoard()
                 
-                //create list of active users and send to clinet
-                
-                //return loginInfo;
+                //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
+
             }
         }catch(Exception e){System.err.println(e.getMessage());}
-        
-        return "Error: No matching user!";//error - no user matches provided userName
     }
+    
+    
     
     //should remove users IPaddress and info from active users table (Members table)
     //removes any messages the user has put on the message board while
@@ -245,7 +246,7 @@ public class UserThread implements Runnable{
         return dataChange.GetRecord(select, from, where);
     }
     
-    //sends the client a list of songs shared by their specified friends
+    //sends the client a list of songs shared by their specified friend or themself
     private ResultSet SharedSongsList(int UserID){        
         String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
         String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
