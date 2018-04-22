@@ -29,9 +29,10 @@ public class JSON {
     
     public JSON(){}
     
-    private boolean isTypeString(String content){
-        content = content.trim();
-        return content.startsWith("\"") && content.endsWith("\"");
+    private boolean isTypeString(Object content){
+        content = content.toString().trim();
+        return ((content.toString().startsWith("\"") && content.toString().endsWith("\"")) ||
+                (content.toString().startsWith("'") && content.toString().endsWith("'")));
     }
     
     private String getWrappedChars(String content){
@@ -110,12 +111,19 @@ public class JSON {
         return parts;
     }
     
-    private String getStoredContentString(String rawContent){
-        if (isTypeString(rawContent)) {
-            rawContent = rawContent.trim();
-            rawContent = rawContent.substring(1, rawContent.length() - 1);
+    private <T extends Object> T getStoredContent(T rawContent){
+        T retVal = null;
+        if ( rawContent.toString().trim().startsWith("r.") ){
+            String dtype =rawContent.toString().trim().split(".")[1].split("::")[0];
+            String dval = rawContent.toString().trim().split("::")[1];
+            return (T)BinResource.lookup(dval);
         }
-        return rawContent;
+        if (isTypeString(rawContent)) {
+            retVal = (T)rawContent.toString().trim();
+            retVal = (T)retVal.toString().substring(1, retVal.toString().length() - 1);
+            return retVal;
+        }
+        else return rawContent;
     }
     
     private String getResultSetTypedString(ResultSet rset,int col){
@@ -150,8 +158,8 @@ public class JSON {
             String _key = prop.getKey();
             Object _val = prop.getValue();
             if (_key == null ? _key == null : _key.equals(key)){
-                String content = _val.toString();
-                res = (T)getStoredContentString(content);
+                T content = (T)_val;
+                res = (T)getStoredContent(content);
             }
         }
         return res;
@@ -177,13 +185,27 @@ public class JSON {
         String[] parts = splitOutsideString( pre , ',' );
         
         for (String part : parts){
-            // split str by ":" and set
-            String ccc = getWrappedChars(part.split(":")[0],"\"","\"");
-            if ( ccc == null ){
-                ccc = getWrappedChars(part.split(":")[0],"'","'");
-            }
+            Object vn = null;
+            String propName = part.split(":")[0].trim();
+            propName = getWrappedChars(propName,"'","'");
+            propName = (propName==null? getWrappedChars(part.split(":")[0].trim(),"\"","\""): propName );
             
-            set ( ccc , part.split(":")[1] );
+            String rawPropVal = part.split(":")[1].trim();
+            Object propVal = getWrappedChars(rawPropVal,"\"","\"");
+            propVal = (propVal == null ? getWrappedChars(rawPropVal,"'","'") : propVal );
+            if ( propVal == null ){
+                try{vn = (int)Integer.parseInt(rawPropVal);}catch (Exception e){ Log.Err(">> Not an int",rawPropVal,vn); };
+                if ( rawPropVal.startsWith("[") && rawPropVal.endsWith("]") ){
+                    propVal = getAsArrayTypedStrings(rawPropVal);
+                }
+                else if ( !"is_null".equals("is_"+vn) ){
+                    propVal = vn;
+                }
+                else{
+                    propVal = null;
+                }
+            }
+            set ( propName , propVal );
         }
         
     }

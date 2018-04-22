@@ -11,6 +11,8 @@ import net.deadbeat.ui.CorePanel;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.JFrame;
 import net.deadbeat.ui.CoreBar;
 import static net.deadbeat.core.Controller.cbar;
@@ -30,11 +32,12 @@ public class Home extends javax.swing.JFrame {
         TaskController.runOnUiThread(()->{
             initFrames();
         });
+        
         JSON job = new JSON();
         job.fromString( " {'name':'bob','age':12,'taste':[1,2,3]} " );
         Log.Out("JSON","name", job.get("name"));
         Log.Out("JSON","age",job.get("age"));
-        Log.Out("JSON","taste",job.get("taste"));
+        Log.Out("JSON","taste", ((String[])job.get("taste"))[0]);
     }
     
     private void initFrames(){
