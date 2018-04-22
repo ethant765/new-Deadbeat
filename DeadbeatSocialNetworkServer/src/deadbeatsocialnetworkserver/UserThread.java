@@ -52,7 +52,7 @@ public class UserThread implements Runnable{
            
         }
         else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(messageParts[0])){
-            
+             returningUser(0); //int clients User_ID
         }
         else if(String.valueOf(headers.LOG_OFF).equals(messageParts[0])){
             logOff();
@@ -132,9 +132,7 @@ public class UserThread implements Runnable{
             
             testFunction(message);
             
-        }catch(Exception e){
-            System.err.println("ERR in UserThread.sendToUser>"+e.getMessage());
-        }
+        }catch(Exception e){System.err.println(e.getMessage());}
     }
 
     
@@ -145,17 +143,17 @@ public class UserThread implements Runnable{
     
     //recieves the data from the client for new user
     //and stores data in the database
-    private String newUser(String[] loginData){
+    private void newUser(JSON obj){
         String tableName = "Profiles";
         String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage)";
         //String Values = "('" + userID + "', '" + loginData[2] + "', '" + loginData[3] + "', '" + loginData[4] + "', " + loginData[5] + ")";
-        return "Error";
+       
     }
     
     
-    //recieves the data from the client for returning user
+     //recieves the data from the client for returning user
     //checks user credentials
-    //adds IPaddress to active users table in DB
+   //adds IPaddress to active users table in DB
     private void returningUser(int ID){
         //get resultset of userName data from the databse
         String value = "*";
@@ -166,21 +164,35 @@ public class UserThread implements Runnable{
         try{
             //if result isn't null then it must have found a user, therefor login is correct
             if(result != null){
-                //after credentials checked create friends list and send it to user
+                //send the user all their requried information
+                sendToUser(result);
                 
-                //send list of friends to the user - ResultSet FriendsList(int UserID)
+                //send a list of their friends to the user
+                sendToUser(FriendsList(ID));
                 
-                //send list of recieved but not accepted friend requests - ResultSet updateFriendRequests(int userID)
+                //send list of recieved but not accepted/rejected friend requests
+                sendToUser(updateFriendRequests(ID));
                 
                 //send list of messageboard items - ResultSet updateMessageBoard()
+                sendToUser(updateMessageBoard());
                 
                 //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
-
+                sendToUser(updateActiveUsers(ID));
+                
+                
+                //add the user to the members table - Stores their IP and logs them as an active user
+                addIP(ID);
             }
         }catch(Exception e){System.err.println(e.getMessage());}
+        
     }
-    
-    
+    //adds new users IP to the active member sql table
+    private void addIP(int ID){
+        String insertInto = "Members";
+        String cols = "(IPAddress, User_ID)";
+        String vals = "(" + userIP + ", " + ID + ")";
+        dataChange.InsertRecord(insertInto, cols, vals);
+    }    
     
     //should remove users IPaddress and info from active users table (Members table)
     //removes any messages the user has put on the message board while
@@ -209,9 +221,7 @@ public class UserThread implements Runnable{
             String removeTable = "MessageBoard";
             String removeCondition = "User_ID = " + result.getInt("User_ID");
             dataChange.DeleteRecord(removeTable, removeCondition);
-        }catch(Exception e){
-            System.err.println("ERR in UserThread>"+e.getMessage());
-        }
+        }catch(Exception e){System.err.println(e.getMessage());}
     }
     
     
@@ -322,10 +332,10 @@ public class UserThread implements Runnable{
     private void testFunction(String testing){
         String testing2 = null;
         JSON test = new JSON();
-        System.out.println("testing => "+testing);
         testing2 = test.getWrappedChars(testing,"[","]");
+        testing2 += "}";
         
-        System.out.println("testing2 => " + testing2);
+        System.out.println(testing2);
         
         test.fromString(testing2);
         String name = test.get("USERNAME");

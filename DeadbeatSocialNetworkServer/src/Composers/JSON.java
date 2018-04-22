@@ -72,7 +72,7 @@ public class JSON {
             return null;
         }
         else{
-            return content.substring(1, content.length() - 1);
+            return content.substring(1, content.length() - 2);
         }
     }
     
@@ -85,7 +85,7 @@ public class JSON {
     private String getStoredContentString(String rawContent){
         if (isTypeString(rawContent)) {
             rawContent = rawContent.trim();
-            rawContent = rawContent.substring(1, rawContent.length() - 1);
+            rawContent = rawContent.substring(1, rawContent.length() - 2);
         }
         return rawContent;
     }
