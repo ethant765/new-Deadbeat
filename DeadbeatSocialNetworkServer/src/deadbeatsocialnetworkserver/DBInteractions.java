@@ -15,8 +15,7 @@ import java.sql.*;
 //requries the SQL Query passing for the DB commands
 public class DBInteractions {
     
-    public static String SQLPath = "jdbc:derby://localhost:1527/DeadbeatDatabase;create=true;ssl=peerAuthentication";
-
+    public static String SQLPath = "jdbc:derby://localhost:1527/DeadbeatDatabase";
     Connection conn = null;
     Statement stmt = null;
     ResultSet res = null;
@@ -67,9 +66,7 @@ public class DBInteractions {
             else{
                 stmt.executeUpdate(SQLQuery);
             }
-        }catch(Exception e){
-            System.err.println("ERR in DBInteractions.EditData>"+e.getMessage());
-        }
+        }catch(Exception e){System.err.println(e.getMessage());}
         return res;
     }
 }
