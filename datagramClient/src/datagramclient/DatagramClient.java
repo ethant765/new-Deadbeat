@@ -28,7 +28,7 @@ public class DatagramClient {
             
             byte[] data = usersInputtedString.getBytes();
             InetAddress addr = InetAddress.getByName("localhost");
-            DatagramPacket sendPacket = new DatagramPacket(data, data.length, addr, 9090);
+            DatagramPacket sendPacket = new DatagramPacket(data, data.length, addr, 1527);
             client.send(sendPacket);
             
             byte[] backData = new byte[1024];
@@ -36,11 +36,11 @@ public class DatagramClient {
             client.receive(recievePacket);
             backData = recievePacket.getData();
             String upperMessage = new String(backData);
-            System.out.println(upperMessage);
+            System.out.println("upperMessage:"+upperMessage);
 
             
         }catch(IOException e){
-            System.err.println("Error! - " + e.getMessage());
+            System.err.println("ERR in DatagramClient>" + e.getMessage());
         }    
     }
     
