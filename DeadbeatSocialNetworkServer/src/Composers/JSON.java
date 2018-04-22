@@ -8,6 +8,8 @@ package Composers;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,13 +19,20 @@ import java.util.logging.Logger;
  */
 public class JSON {
     
-    private String[] props;
+    private List<Pair> props = new ArrayList<>();
+    
+    private enum T_SEP{
+        SINGLE_QUOTE,
+        DOUBLE_QUOTE,
+        BRACKET_CHAR;
+    }
     
     public JSON(){}
     
-    private boolean isTypeString(String content){
-        content = content.trim();
-        return content.startsWith("\"") && content.endsWith("\"");
+    private boolean isTypeString(Object content){
+        content = content.toString().trim();
+        return ((content.toString().startsWith("\"") && content.toString().endsWith("\"")) ||
+                (content.toString().startsWith("'") && content.toString().endsWith("'")));
     }
     
     private String getWrappedChars(String content){
@@ -32,29 +41,49 @@ public class JSON {
     
     private String[] splitOutsideString(String content,char splitter,boolean includeQuote){
     
-        String[] res = {};
+        List<String> res = new ArrayList<>();
+        char[] lc = content.toCharArray();
         boolean stringIsOpen = false;
+        T_SEP qtype = T_SEP.SINGLE_QUOTE;
         String stringSoFar = "";
         
-        for (char c : content.toCharArray()) {
+        for (char c : lc) {
             
-            if ( c == '"' ){
+            if ( 
+                    ( c == '"' && qtype == T_SEP.DOUBLE_QUOTE) || 
+                    ( c == '\'' && qtype == T_SEP.SINGLE_QUOTE) ){
                 stringIsOpen = !stringIsOpen;
+                if (stringIsOpen){
+                    qtype = (c == '\'' ? T_SEP.SINGLE_QUOTE : T_SEP.DOUBLE_QUOTE);
+                }
             }
-            
+            else if ( c == '[' && stringIsOpen == false ){
+                stringIsOpen = true;
+                qtype = T_SEP.BRACKET_CHAR;
+            }
+            else if ( c == ']' && stringIsOpen == true && qtype == T_SEP.BRACKET_CHAR ){
+                stringIsOpen = false;
+            }
             if ( c == splitter && stringIsOpen == false ){
-                res[res.length] = stringSoFar;
+                res.add(stringSoFar);
                 stringSoFar = "";
             }
             else{
-                if ( ( c == '"' && includeQuote == true ) || c != '"' ){
+                boolean isQuote = ( 
+                        (c=='"' && qtype == T_SEP.DOUBLE_QUOTE) || 
+                        (c=='\'' && qtype == T_SEP.SINGLE_QUOTE)||
+                        ((c=='[' || c==']') && qtype == T_SEP.BRACKET_CHAR));
+                
+                if ( ( isQuote && includeQuote == true ) || !isQuote ){
                     stringSoFar += String.valueOf(c);
                 }
             }
             
         }
         
-        return res;
+        if ( stringSoFar.length() > 0 ) res.add(stringSoFar);
+        
+        return res.toArray(new String[0]);
         
     }
     
@@ -72,7 +101,7 @@ public class JSON {
             return null;
         }
         else{
-            return content.substring(1, content.length() - 2);
+            return content.substring(1, content.length() - 1);
         }
     }
     
@@ -82,12 +111,19 @@ public class JSON {
         return parts;
     }
     
-    private String getStoredContentString(String rawContent){
-        if (isTypeString(rawContent)) {
-            rawContent = rawContent.trim();
-            rawContent = rawContent.substring(1, rawContent.length() - 2);
+    private <T extends Object> T getStoredContent(T rawContent){
+        T retVal = null;
+        if ( rawContent.toString().trim().startsWith("r.") ){
+            String dtype =rawContent.toString().trim().split(".")[1].split("::")[0];
+            String dval = rawContent.toString().trim().split("::")[1];
+            return (T)BinResource.lookup(dval);
         }
-        return rawContent;
+        if (isTypeString(rawContent)) {
+            retVal = (T)rawContent.toString().trim();
+            retVal = (T)retVal.toString().substring(1, retVal.toString().length() - 1);
+            return retVal;
+        }
+        else return rawContent;
     }
     
     private String getResultSetTypedString(ResultSet rset,int col){
@@ -102,7 +138,7 @@ public class JSON {
                 case java.sql.Types.DATE:
                     return rset.getDate(colName).toString();
                 case java.sql.Types.BLOB:
-                    return BinResource.reference( rset.getBlob(colName) );
+                    return "r.blob::"+BinResource.reference( rset.getBlob(colName) );
                 default:
                     return rset.getObject(colName).toString();
             }
@@ -113,43 +149,65 @@ public class JSON {
     }
     
     public void set(String key, Object val){
-        props[props.length] = key + ":" + val;
+        props.add( new Pair(key , val) );
     }
     
     public <T extends Object> T get(String key){
         T res = null;
-        for (String prop : props) {
-            if (prop.split(":")[0] == null ? key == null : prop.split(":")[0].equals(key)){
-                String content = prop.split(":")[1];
-                res = (T)getStoredContentString(content);
+        for (Pair prop : props) {
+            String _key = prop.getKey();
+            Object _val = prop.getValue();
+            if (_key == null ? _key == null : _key.equals(key)){
+                T content = (T)_val;
+                res = (T)getStoredContent(content);
             }
         }
         return res;
     }
     
     public int length(){
-        return props.length;
+        return props.size();
     }
     
     @Override
     public String toString(){
         String res = "{\n";
-        for (String prop : props) {
-            res += prop + ",\n";
+        for (Pair prop : props){
+            res += "\"" + prop.getKey() + "\":\"" + prop.getValue().toString() + ",\n";
         }
         return res + "}";
     }
     
-    public void fromString(String string){
+    public void fromString(CharSequence string){
         
-        String inputString = string.trim();
+        String inputString = string.toString().trim();
         
         //check if json_string root is an array
-        String[] parts = splitOutsideString( getWrappedChars(string,"{","}") , ',' );
+        String pre = getWrappedChars(inputString,"{","}");
+        String[] parts = splitOutsideString( pre , ',' );
         
         for (String part : parts){
-            // split str by ":" and set
-            set ( getWrappedChars(part.split(":")[0],"\"","\"") , part.split(":")[1] );
+            Object vn = null;
+            String propName = part.split(":")[0].trim();
+            propName = getWrappedChars(propName,"'","'");
+            propName = (propName==null? getWrappedChars(part.split(":")[0].trim(),"\"","\""): propName );
+            
+            String rawPropVal = part.split(":")[1].trim();
+            Object propVal = getWrappedChars(rawPropVal,"\"","\"");
+            propVal = (propVal == null ? getWrappedChars(rawPropVal,"'","'") : propVal );
+            if ( propVal == null ){
+                try{vn = (int)Integer.parseInt(rawPropVal);}catch (Exception e){ Log.Err(">> Not an int",rawPropVal,vn); };
+                if ( rawPropVal.startsWith("[") && rawPropVal.endsWith("]") ){
+                    propVal = getAsArrayTypedStrings(rawPropVal);
+                }
+                else if ( !"is_null".equals("is_"+vn) ){
+                    propVal = vn;
+                }
+                else{
+                    propVal = null;
+                }
+            }
+            set ( propName , propVal );
         }
         
     }
