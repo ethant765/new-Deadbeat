@@ -132,7 +132,9 @@ public class UserThread implements Runnable{
             
             testFunction(message);
             
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){
+            System.err.println("ERR in UserThread.sendToUser>"+e.getMessage());
+        }
     }
 
     
@@ -207,7 +209,9 @@ public class UserThread implements Runnable{
             String removeTable = "MessageBoard";
             String removeCondition = "User_ID = " + result.getInt("User_ID");
             dataChange.DeleteRecord(removeTable, removeCondition);
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){
+            System.err.println("ERR in UserThread>"+e.getMessage());
+        }
     }
     
     

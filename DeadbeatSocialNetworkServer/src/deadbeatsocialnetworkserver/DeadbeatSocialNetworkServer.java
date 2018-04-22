@@ -24,7 +24,7 @@ public class DeadbeatSocialNetworkServer {
     }
     
     protected void NewClient(){
-        int portNum = 9090;
+        int portNum = 1527;
         try{
             DatagramSocket serverSocket = new DatagramSocket(portNum);
             byte[] data = new byte[1024];
@@ -37,11 +37,17 @@ public class DeadbeatSocialNetworkServer {
                 DatagramPacket recieveData = new DatagramPacket(data, data.length);
                 serverSocket.receive(recieveData);
                 
+                System.out.println("Created...");
+                
                 //create a new thread for each client which is connecting
                 Thread newClient = new Thread(new UserThread(serverSocket, recieveData));
                 newClient.start();
+                
+                System.out.println("Started...");
             }
             
-        }catch(IOException e){System.err.println(e.getMessage());}
+        }catch(Exception e){
+            System.err.println("ERR in MainThread>"+e.getMessage());
+        }
     }
 }
