@@ -143,17 +143,17 @@ public class UserThread implements Runnable{
     
     //recieves the data from the client for new user
     //and stores data in the database
-    private String newUser(String[] loginData){
+    private void newUser(JSON obj){
         String tableName = "Profiles";
         String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage)";
         //String Values = "('" + userID + "', '" + loginData[2] + "', '" + loginData[3] + "', '" + loginData[4] + "', " + loginData[5] + ")";
-        return "Error";
+       
     }
     
     
-    //recieves the data from the client for returning user
+     //recieves the data from the client for returning user
     //checks user credentials
-    //adds IPaddress to active users table in DB
+   //adds IPaddress to active users table in DB
     private void returningUser(int ID){
         //get resultset of userName data from the databse
         String value = "*";
@@ -186,15 +186,13 @@ public class UserThread implements Runnable{
         }catch(Exception e){System.err.println(e.getMessage());}
         
     }
-    
     //adds new users IP to the active member sql table
     private void addIP(int ID){
         String insertInto = "Members";
         String cols = "(IPAddress, User_ID)";
         String vals = "(" + userIP + ", " + ID + ")";
         dataChange.InsertRecord(insertInto, cols, vals);
-    }
-    
+    }    
     
     //should remove users IPaddress and info from active users table (Members table)
     //removes any messages the user has put on the message board while
