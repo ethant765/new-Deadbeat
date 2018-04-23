@@ -11,8 +11,7 @@ import java.sql.ResultSet;
 import java.util.*;
 import net.deadbeat.utility.Log;
 import net.deadbeat.utility.Tokenizer;
-import org.JSON.JSONArray;
-
+import java.text.*;
 
 /**
  *
@@ -46,8 +45,7 @@ public class UserThread implements Runnable{
         //get the data sent from the user on their connection to the server
         byte[] data = new byte[1024];
         data = packet.getData();
-        String Message = '['+new String(data)+']';
-        //String messageParts[] = SplitString(Message);
+        String Message = '[' + new String(data)+']';
 
         JSON stringObject = new JSON();
         stringObject.fromString(Message);
@@ -69,20 +67,7 @@ public class UserThread implements Runnable{
         else{
             //error
         }
-    }
-    
-    //used to split recieved strings into their indervidual tokens
-    private String[] SplitString(String passedString){
-        StringTokenizer tokens = new StringTokenizer(passedString, ",");
-        int numOfTokens = tokens.countTokens();
-        String holder[] = new String[numOfTokens];
-        
-        for(int i = 0; i < numOfTokens; i++){
-            holder[i] = tokens.nextToken().trim();
-        }
-        return holder;
-    }
-    
+    }    
 
     //function used to return data to the client
     private void sendToUser(ResultSet sendData){
@@ -113,9 +98,9 @@ public class UserThread implements Runnable{
             
             
             
-            JSON test = new JSON();
-            test.fromResultSet(sendData);
-            Log.Out(test);
+            JSON jsonString = new JSON();
+            jsonString.fromResultSet(sendData);
+            Log.Out(jsonString);
             
         }catch(Exception e){System.err.println(e.getMessage());}
     }
@@ -218,20 +203,27 @@ public class UserThread implements Runnable{
     
     //-------------------------------------------enum functions-----------------------------------------------------
     //allows the client to share a song
-    private void shareSong(JSON obj){
-        int userID = 0;
-        int songID = 0;
-        String songName = null;
-        String Artist = null;
-        Date ReleaseDate = null;
-        String Album = null;
+    private void shareSong(JSON obj){        
+        try{
+            int userID = obj.getJSON().getInt("USER_ID");
+            int songID = obj.getJSON().getInt("SONG_ID");
+            String songName = obj.getJSON().getString("SONG_NAME");
+            String Artist = obj.getJSON().getString("ARTIS");
+            
+            
+            Date ReleaseDate = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("RELEASE_DATE"));
+            
+            
+            String Album = obj.getJSON().getString("ALBUM");
+        } catch(Exception e){System.err.println(e.getMessage());}
+        
         /*Blob Song*/
     }
     
     //allows the client to send a friend request to another user who isn't already their friend
-    private void sendFriendRequest(JSON obj){
-        int clientUserID = 0;
-        int otherUsersID = 0;
+    private void sendFriendRequest(JSON obj){        
+        int clientUserID = obj.getJSON().getInt("USER_ID");
+        int otherUsersID = obj.getJSON().getInt("FRIEND_USER_ID");
         
         
         String table = "Friends";
@@ -242,11 +234,10 @@ public class UserThread implements Runnable{
     
     //chanegs the status of a friend request (accept or reject)
     private void updateFriendRequestStatus(JSON obj){
-        int clientUserID = 0;
-        int FriendRequestUserID = 0;
-        boolean accepted = false;
-        
-        
+        int clientUserID = obj.getJSON().getInt("USER_ID");
+        int FriendRequestUserID = obj.getJSON().getInt("FRIEND_USER_ID");
+        boolean accepted = Boolean.valueOf(obj.getJSON().getString("ACCEPTED"));
+
         String newStatus;
         if(accepted == true)
             newStatus = "con"; //connected
@@ -261,9 +252,9 @@ public class UserThread implements Runnable{
         
     //adds the users message to the message board for their friends to see
     private void addToMessageBoard(JSON obj){
-        int userID = 0;
-        String title = null;
-        String message = null;
+        int userID = obj.getJSON().getInt("USER_ID");
+        String title = obj.getJSON().getString("TITLE");
+        String message = obj.getJSON().getString("MESSAGE");
         
         
         String table = "MessageBoard";
@@ -274,8 +265,7 @@ public class UserThread implements Runnable{
     
     //sends client list of all currently online users
     private ResultSet updateActiveUsers(JSON obj){
-        int userID = 0;
-        
+        int userID = obj.getJSON().getInt("USER_ID");
         
         String select = "Members.User_ID, Profiles.UserName";
         String from = "FROM Profiles RIGHT JOIN Members ON Profiles.User_ID = Members.User_ID";
@@ -285,10 +275,10 @@ public class UserThread implements Runnable{
     }
     
     //sends the client a list of songs shared by their specified friend or themself
+    //send the function a user_ID not nesseserally the clients - (friends IDs are also sent to the client with friends list)
     private ResultSet SharedSongsList(JSON obj){
-        int userID = 0;
-        
-    
+        int userID = obj.getJSON().getInt("USER_ID");
+
         String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
         String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
         String where = "ProfileSharedSongs.USER_ID = " + userID;
@@ -298,8 +288,7 @@ public class UserThread implements Runnable{
     
     //sends the client a list of all other profiles with similar music preferences
     private ResultSet similarProfiles(JSON obj){
-        int userID = 0;
-        
+        int userID = obj.getJSON().getInt("USER_ID");
         
         String sqlCmd = "select Profiles.User_ID, Profiles.UserName " +
                 "from Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID " +
@@ -322,8 +311,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of all their friend requests
     private ResultSet updateFriendRequests(JSON obj){
-        int userID = 0;
-        
+        int userID = obj.getJSON().getInt("USER_ID");
         
         String vals = "Profiles.User_ID, Profiles.UserName";
         String tables = "Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID";
@@ -348,18 +336,20 @@ public class UserThread implements Runnable{
                " AND Friends.Status_ID = 'con')";
        
        
-       ResultSet test = dataChange.GetCustomRecord(sqlCmd);
+       ResultSet results = dataChange.GetCustomRecord(sqlCmd);
        /*try{
-           while(test.next()){
-               String stringHolder = test.getString("USERNAME");
-               int idHolder = test.getInt("USER_ID");
+           while(results.next()){
+               String stringHolder = results.getString("USERNAME");
+               int idHolder = results.getInt("USER_ID");
                System.out.println(stringHolder + ",    " + idHolder);
            }
        }catch(Exception e){}*/
 
-        return test;
+        return results;
     }
     
+    
+    /* REMOVE BEFORE HANDIN
     private void testFunction(String testing){
         String testing2 = null;
         JSON test = new JSON();
@@ -378,6 +368,17 @@ public class UserThread implements Runnable{
         System.out.println(name);
         //System.out.println(id);
         
-    }
-    
+    }*/
+        
+    //used to split recieved strings into their indervidual tokens
+    /*private String[] SplitString(String passedString){
+        StringTokenizer tokens = new StringTokenizer(passedString, ",");
+        int numOfTokens = tokens.countTokens();
+        String holder[] = new String[numOfTokens];
+        
+        for(int i = 0; i < numOfTokens; i++){
+            holder[i] = tokens.nextToken().trim();
+        }
+        return holder;
+    }*/
 }
