@@ -143,7 +143,7 @@ public class UserThread implements Runnable{
                 sendToUser(result);
                 
                 //send a list of their friends to the user
-                //sendToUser(FriendsList(obj));
+                sendToUser(FriendsList(obj));
                 
                 //send list of recieved but not accepted/rejected friend requests
                 sendToUser(updateFriendRequests(obj));
@@ -153,7 +153,6 @@ public class UserThread implements Runnable{
                 
                 //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
                 sendToUser(updateActiveUsers(obj));
-                
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
                 addIP(ID);
@@ -167,7 +166,7 @@ public class UserThread implements Runnable{
         String cols = "(IPAddress, User_ID)";
         String vals = "(" + userIP + ", " + ID + ")";
         dataChange.InsertRecord(insertInto, cols, vals);
-    }    
+    }
     
     //should remove users IPaddress and info from active users table (Members table)
     //removes any messages the user has put on the message board while
@@ -208,17 +207,44 @@ public class UserThread implements Runnable{
     //allows the client to share a song
     private void shareSong(JSON obj){        
         try{
+            //get data out of JSON string object
             int userID = obj.getJSON().getInt("USER_ID");
-            int songID = obj.getJSON().getInt("SONG_ID");
+            int songID = songIdGen();
             String songName = obj.getJSON().getString("SONG_NAME");
             String Artist = obj.getJSON().getString("ARTIS");
             Date ReleaseDate = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("RELEASE_DATE"));
             String Album = obj.getJSON().getString("ALBUM");
             Object songFile = BinResource.lookup(obj.getJSON().getString("SONG"));
+            
+            //insert data into SharedSong table
+            String SongTable = "SharedSongs";
+            String SongCols = "(SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album)";
+            String SongVals = "(" + songID + ", " + songFile + ", '" + songName + "', '" + Artist + "', '" + ReleaseDate + "', '" + Album + "')";
+            dataChange.InsertRecord(SongTable, SongCols, SongVals);
+            
+            //insert data into ProfileSharedSongs table
+            String PSStable = "ProfileSharedSongs";
+            String PSScols = "(USER_ID, SharedSongs_ID)";
+            String PPSvals = "(" + userID + ", " + songID + ")";
+            dataChange.InsertRecord(PSStable, PSScols, PPSvals);
         } catch(Exception e){System.err.println(e.getMessage());}
-        
-        /*Blob Song*/
     }
+    //generates a new unique ID for songs being added
+    private int songIdGen(){
+        String Vals = "SharedSong_ID";
+        String from = "SharedSongs";
+        ResultSet IDs = dataChange.GetRecord(Vals, from, null);
+        
+        int newID = 0; // start at 0
+        
+        try{
+            while(IDs.next()){
+                newID++;//increment for each item
+            }
+        }catch(Exception e){System.err.println(e.getMessage());}
+        return newID += 1; //add 1 to be a higher number than any existing IDs
+    }
+    
     
     //allows the client to send a friend request to another user who isn't already their friend
     private void sendFriendRequest(JSON obj){        
@@ -231,6 +257,7 @@ public class UserThread implements Runnable{
         String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
         dataChange.InsertRecord(table, cols, vals);
     }
+    
     
     //chanegs the status of a friend request (accept or reject)
     private void updateFriendRequestStatus(JSON obj){
@@ -253,7 +280,7 @@ public class UserThread implements Runnable{
     //adds the users message to the message board for their friends to see
     private void addToMessageBoard(JSON obj){
         int userID = obj.getJSON().getInt("USER_ID");
-        String title = obj.getJSON().getString("TITLE");
+        String title = obj.getJSON().getString("MESSAGE_TITLE");
         String message = obj.getJSON().getString("MESSAGE");
         
         
