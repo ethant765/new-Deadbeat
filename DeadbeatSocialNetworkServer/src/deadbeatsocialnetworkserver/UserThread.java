@@ -103,7 +103,7 @@ public class UserThread implements Runnable{
             
             JSON jsonString = new JSON();
             jsonString.fromResultSet(sendData);
-            Log.Out(jsonString);
+            Log.Out(jsonString.getString("USERNAME"));
             
         }catch(Exception e){System.err.println(e.getMessage());}
     }
