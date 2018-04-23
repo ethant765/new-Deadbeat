@@ -10,15 +10,22 @@ package deadbeatsocialnetworkserver;
  * @author Ethan
  */
 public enum dataHeader {
-    //function: handles new user creation
-    //Data Needed: "UserID,UserName,PlaceOfBirth,DOB,ProfileImage" - UserID is PK integer in database
-    //Data returned: UPDATE_ACTIVE_USERS function
+    //column name used by the server for geting the enum HEADER
+    
+    //function: handles new user creation then passes to logon to log new user on
+    //Data Needed: USERNAME, PASSWORD, PROFILE_IMAGE, DOB, PLACE_OF_BIRTH,
+    //Data returned: USER_ID, OTHER_LOGIN_INFO
     LOGIN_NEW_USER,
     
     //function: handles existing user logon
     //Data Needed: USERNAME, PASSWORD
-    //Data returned: ResultSet(User_ID, UserName, PlaceOFBirth, DOB, ProfileImage), ResultSet(FRIENDS_LIST), ResultSet(UPDATE_FRIEND_REQUESTS), ResultSet(UPDATE_MESSAGE_BOARD), ResultSet(UPDATE_ACTIVE_USERS)
+    //Data returned: ResultSet(User_ID, UserName, PlaceOFBirth, DOB, ProfileImage), OTHER_LOGIN_INFO
     LOGIN_EXISTING_USER,
+    
+    /*
+    OTHER_LOGIN_INFO:
+    ResultSet(FRIENDS_LIST), ResultSet(UPDATE_FRIEND_REQUESTS), ResultSet(UPDATE_MESSAGE_BOARD), ResultSet(UPDATE_ACTIVE_USERS)
+    */
     
     //function: handles user log off - removes users IPaddress and messages from message board
     //Data Needed: N/A
