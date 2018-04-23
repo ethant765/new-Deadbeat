@@ -75,11 +75,15 @@ public class JSON extends ArrayList< List<Token> > {
     }
     
     public int getInt(String search){
-        return this.<Integer>at(search);
+        return Integer.parseInt( this.<String>at(search) );
     }
     
     public String getString(int index){
         return this.<String>at(index);
+    }
+    
+    public String getString(String search){
+        return this.<String>at(search);
     }
     
     public <T> T val(int index){
