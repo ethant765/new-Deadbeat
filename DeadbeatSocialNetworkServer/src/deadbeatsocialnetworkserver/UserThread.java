@@ -9,6 +9,7 @@ import net.deadbeat.utility.JSON;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
+import net.deadbeat.utility.Log;
 import net.deadbeat.utility.Tokenizer;
 import org.JSON.JSONArray;
 
@@ -96,19 +97,25 @@ public class UserThread implements Runnable{
             
            
             
-             resultSetToJson test = new resultSetToJson();
+             /* test = new resultSetToJson();
              JSONArray jArray = new JSONArray();
              jArray = test.convertToJSON(sendData);
-             String message = jArray.toString();
+             String message = jArray.toString();*/
              
              
             
             //convert string to bytes ready to send to client
-            byte[] data = message.getBytes();
+            /*byte[] data = message.getBytes();
             DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
-            socket.send(sendPacket);
+            socket.send(sendPacket);*/
             
-            testFunction(message);
+            //testFunction(message);
+            
+            
+            
+            JSON test = new JSON();
+            test.fromResultSet(sendData);
+            Log.Out(test);
             
         }catch(Exception e){System.err.println(e.getMessage());}
     }
@@ -328,7 +335,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(JSON obj){
-        int userID = obj.getJSON().<Integer>val("USER_ID");
+        int userID = obj.getJSON().getInt("USER_ID");
                 
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
@@ -339,8 +346,18 @@ public class UserThread implements Runnable{
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.Friend_ID " +
                "WHERE Friends.Friend_ID <> " + userID +
                " AND Friends.Status_ID = 'con')";
+       
+       
+       ResultSet test = dataChange.GetCustomRecord(sqlCmd);
+       /*try{
+           while(test.next()){
+               String stringHolder = test.getString("USERNAME");
+               int idHolder = test.getInt("USER_ID");
+               System.out.println(stringHolder + ",    " + idHolder);
+           }
+       }catch(Exception e){}*/
 
-        return dataChange.GetCustomRecord(sqlCmd);
+        return test;
     }
     
     private void testFunction(String testing){
