@@ -74,6 +74,10 @@ public class JSON extends ArrayList< List<Token> > {
         return this.<Integer>at(index);
     }
     
+    public int getInt(String search){
+        return this.<Integer>at(search);
+    }
+    
     public String getString(int index){
         return this.<String>at(index);
     }
