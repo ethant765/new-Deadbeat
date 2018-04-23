@@ -46,10 +46,27 @@ public class Home extends javax.swing.JFrame {
         
         JSON job = new JSON();
         job.fromString(iv);
-
         
+        // USAGE
+        // jobject.<DATA_TYPE>at(INDEX,[optional DATA_TYPE]).<DATA_TYPE>at(NAME or INDEX)
+        
+        // EXAMPLE
+        Log.Out("IN = ",iv);
         Log.Out("JSON file = ", job.getJSON() );
-       
+        Log.Out("User name = ", job.getJSON().val("name") , job.getJSON().<Integer>val("age"));
+        Log.Out("User name = ", job.getJSON(1).val("name") , job.getJSON(1).<Integer>val("age"));
+        Log.Out("List values =", job.getJSON().<String[]>val("songs")[1] );
+        
+        Log.Out("break");
+
+//        
+//        t.get(0).forEach((tkn) -> {
+//            Log.Out(0,tkn.serialValue + "->" + tkn.type.name());
+//        });
+//        t.get(1).forEach((tkn) -> {
+//            Log.Out(1,tkn.serialValue + "->" + tkn.type.name());
+//        });
+        
     }
     
     private void initFrames(){
