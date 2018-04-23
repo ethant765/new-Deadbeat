@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package Composers;
+package net.deadbeat.utility;
 
 import java.util.List;
 import java.util.UUID;

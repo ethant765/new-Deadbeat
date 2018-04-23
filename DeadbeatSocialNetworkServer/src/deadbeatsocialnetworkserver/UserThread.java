@@ -5,10 +5,11 @@
  */
 package deadbeatsocialnetworkserver;
 
-import Composers.JSON;
+import net.deadbeat.utility.JSON;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
+import net.deadbeat.utility.Tokenizer;
 import org.json.JSONArray;
 
 /**
@@ -332,7 +333,7 @@ public class UserThread implements Runnable{
     private void testFunction(String testing){
         String testing2 = null;
         JSON test = new JSON();
-        testing2 = test.getWrappedChars(testing,"[","]");
+        testing2 = Tokenizer.getWrappedChars(testing,"[","]");
         testing2 += "}";
         
         System.out.println(testing2);
