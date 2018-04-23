@@ -18,6 +18,8 @@ import net.deadbeat.ui.CoreBar;
 import static net.deadbeat.core.Controller.cbar;
 import net.deadbeat.utility.JSON;
 import net.deadbeat.utility.Log;
+import net.deadbeat.utility.Token;
+import net.deadbeat.utility.Tokenizer;
 
 /**
  *
@@ -33,11 +35,37 @@ public class Home extends javax.swing.JFrame {
             initFrames();
         });
         
+//        JSON job = new JSON();
+//        job.fromString( " {'name':'bob','age':12,'taste':[1,2,3]} " );
+//        Log.Out("JSON test => "," {'name':'bob','age':12,'taste':[1,2,3]} ");
+//        Log.Out("JSON","name", job.get("name"));
+//        Log.Out("JSON","age",job.get("age"));
+//        Log.Out("JSON","taste", ((String[])job.get("taste"))[0]);
+        
+        String iv = " [{'name':'adam','age':22,'songs':[2234,'abba, 2012']},{'name':'bob','age':24,'songs':[1,2,3]}] ";
+        
         JSON job = new JSON();
-        job.fromString( " {'name':'bob','age':12,'taste':[1,2,3]} " );
-        Log.Out("JSON","name", job.get("name"));
-        Log.Out("JSON","age",job.get("age"));
-        Log.Out("JSON","taste", ((String[])job.get("taste"))[0]);
+        job.fromString(iv);
+        
+        // USAGE
+        // jobject.<DATA_TYPE>at(INDEX,[optional DATA_TYPE]).<DATA_TYPE>at(NAME or INDEX)
+        
+        // EXAMPLE
+        Log.Out("JSON file = ", job.<JSON>at(0) );
+        Log.Out("User name = ", job.getJSON(0).val("name") , job.getJSON(0).<Integer>val("age"));
+        Log.Out("User name = ", job.getJSON(1).val("name") , job.getJSON(1).<Integer>val("age"));
+        Log.Out("List values =", job.getJSON(0).<String[]>val("songs")[1] );
+        
+        Log.Out("break");
+
+//        
+//        t.get(0).forEach((tkn) -> {
+//            Log.Out(0,tkn.serialValue + "->" + tkn.type.name());
+//        });
+//        t.get(1).forEach((tkn) -> {
+//            Log.Out(1,tkn.serialValue + "->" + tkn.type.name());
+//        });
+        
     }
     
     private void initFrames(){

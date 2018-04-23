@@ -12,14 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.deadbeat.utility.Token;
 
 /**
  *
  * @author darylcecile
  */
-public class JSON {
-    
-    private List<Pair> props = new ArrayList<>();
+public class JSON extends ArrayList< List<Token> > {
     
     private enum T_SEP{
         SINGLE_QUOTE,
@@ -27,198 +26,141 @@ public class JSON {
         BRACKET_CHAR;
     }
     
-    public JSON(){}
-    
-    private boolean isTypeString(Object content){
-        content = content.toString().trim();
-        return ((content.toString().startsWith("\"") && content.toString().endsWith("\"")) ||
-                (content.toString().startsWith("'") && content.toString().endsWith("'")));
+    public JSON(){
+        this.add(new ArrayList<>());
     }
     
-    private String getWrappedChars(String content){
-        return getWrappedChars(content,"","");
-    }
-    
-    private String[] splitOutsideString(String content,char splitter,boolean includeQuote){
-    
-        List<String> res = new ArrayList<>();
-        char[] lc = content.toCharArray();
-        boolean stringIsOpen = false;
-        T_SEP qtype = T_SEP.SINGLE_QUOTE;
-        String stringSoFar = "";
-        
-        for (char c : lc) {
-            
-            if ( 
-                    ( c == '"' && qtype == T_SEP.DOUBLE_QUOTE) || 
-                    ( c == '\'' && qtype == T_SEP.SINGLE_QUOTE) ){
-                stringIsOpen = !stringIsOpen;
-                if (stringIsOpen){
-                    qtype = (c == '\'' ? T_SEP.SINGLE_QUOTE : T_SEP.DOUBLE_QUOTE);
-                }
-            }
-            else if ( c == '[' && stringIsOpen == false ){
-                stringIsOpen = true;
-                qtype = T_SEP.BRACKET_CHAR;
-            }
-            else if ( c == ']' && stringIsOpen == true && qtype == T_SEP.BRACKET_CHAR ){
-                stringIsOpen = false;
-            }
-            if ( c == splitter && stringIsOpen == false ){
-                res.add(stringSoFar);
-                stringSoFar = "";
-            }
-            else{
-                boolean isQuote = ( 
-                        (c=='"' && qtype == T_SEP.DOUBLE_QUOTE) || 
-                        (c=='\'' && qtype == T_SEP.SINGLE_QUOTE)||
-                        ((c=='[' || c==']') && qtype == T_SEP.BRACKET_CHAR));
-                
-                if ( ( isQuote && includeQuote == true ) || !isQuote ){
-                    stringSoFar += String.valueOf(c);
-                }
-            }
-            
+//    public void set(int index, String key, Object val){
+//        this.get(index).add( new Pair(key , val) );
+//    }
+//    
+//    public void set(String key,Object val){
+//        set(this.size()-1,key,val);
+//    }
+//    
+//  
+    public <V,T> V get(T a){
+        if ( a.getClass() == String.class ){
+            return (V)at( (String)a );
         }
-        
-        if ( stringSoFar.length() > 0 ) res.add(stringSoFar);
-        
-        return res.toArray(new String[0]);
-        
-    }
-    
-    private String[] splitOutsideString(String content,char splitter){
-        return splitOutsideString(content,splitter,true);
-    }
-   
-    //made public for test
-    public String getWrappedChars(String content,String fromFirst,String toLast){
-        content = content.trim();
-        if ((fromFirst == null ? toLast == null : fromFirst.equals(toLast)) && "".equals(fromFirst)){
-            return content;
-        }
-        else if ( !content.startsWith(fromFirst) || !content.endsWith(toLast) ){
-            return null;
+        else if ( a.getClass() == Integer.class ){
+            return (V)at( (Integer)a );
         }
         else{
-            return content.substring(1, content.length() - 1);
+            return (V)at( (String)a );
         }
     }
     
-    private String[] getAsArrayTypedStrings(String content){
-        String inputString = content.trim();
-        String[] parts = splitOutsideString( getWrappedChars(inputString,"[","]") , ',' );
-        return parts;
-    }
-    
-    private <T extends Object> T getStoredContent(T rawContent){
-        T retVal = null;
-        if ( rawContent.toString().trim().startsWith("r.") ){
-            String dtype =rawContent.toString().trim().split(".")[1].split("::")[0];
-            String dval = rawContent.toString().trim().split("::")[1];
-            return (T)BinResource.lookup(dval);
+    public JSON getJSON(int index){
+        Token t = this.<Token>at(index);
+        if ( t.type == Tokenizer.TokenType.JSON ){
+            return t.get();
         }
-        if (isTypeString(rawContent)) {
-            retVal = (T)rawContent.toString().trim();
-            retVal = (T)retVal.toString().substring(1, retVal.toString().length() - 1);
-            return retVal;
-        }
-        else return rawContent;
-    }
-    
-    private String getResultSetTypedString(ResultSet rset,int col){
-        try {
-            ResultSetMetaData rsmdata = rset.getMetaData();
-            String colName = rsmdata.getColumnName(col);
-            switch (rsmdata.getColumnType(col)){
-                case java.sql.Types.INTEGER:
-                    return "" + rset.getInt(colName);
-                case java.sql.Types.VARCHAR:
-                    return rset.getString(colName);
-                case java.sql.Types.DATE:
-                    return rset.getDate(colName).toString();
-                case java.sql.Types.BLOB:
-                    return "r.blob::"+BinResource.reference( rset.getBlob(colName) );
-                default:
-                    return rset.getObject(colName).toString();
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(JSON.class.getName()).log(Level.SEVERE, null, ex);
+        else{
             return null;
         }
     }
     
-    public void set(String key, Object val){
-        props.add( new Pair(key , val) );
+    public List getList(int index){
+        return this.getJSON(index);
     }
     
-    public <T extends Object> T get(String key){
-        T res = null;
-        for (Pair prop : props) {
-            String _key = prop.getKey();
-            Object _val = prop.getValue();
-            if (_key == null ? _key == null : _key.equals(key)){
-                T content = (T)_val;
-                res = (T)getStoredContent(content);
+    public int getInt(int index){
+        return this.<Integer>at(index);
+    }
+    
+    public String getString(int index){
+        return this.<String>at(index);
+    }
+    
+    public <T> T val(int index){
+        return this.<T>at(index);
+    }
+    
+    public <T> T val(String search){
+        return this.<T>at(search);
+    }
+    
+    public <T> T at(int index, String format){
+        List<Token> item = super.get(index);
+        if ( item.size() == 1 && ((Token)item.get(0)).type == Tokenizer.TokenType.JSON ){
+            if ( "JSON".equalsIgnoreCase(format) ){
+                return (T)item.get(0).<JSON>get();
+            }
+            else{
+                return (T)item.get(0);
             }
         }
-        return res;
+        else{
+            return (T)item;
+        }
+    }
+    
+    public <T> T at(int index){
+        return at(index,"Token");
+    }
+    
+    public <T> T at(String search){
+        List<Token> items = this.get(0);
+        
+        for (Token item : items){
+            if ( Tokenizer.removeQuotation(item.serialName).equals(search) ){
+                String v = item.serialValue.trim();
+                if ( v.startsWith("[") && v.endsWith("]") ){
+                    // TODO make list work with non digits
+                    return (T)( (String[])v.substring(1,v.length()-1).split(",") );
+                }
+                else{
+                    return (T)Tokenizer.removeQuotation(item.serialValue);
+                }
+            }
+        }
+        return null;
+    }
+    
+    //aliases
+    public <T> T n(int a) {
+        return (T)at(a);
+    }
+    public <T> T n(String s){
+        return (T)at(s);
+    }
+    public <T> T n(){
+        return (T)at( size()-1 );
+    }
+    
+    public int length(int index){
+        return this.get(index).size();
     }
     
     public int length(){
-        return props.size();
+        return this.size();
     }
+    
     
     @Override
     public String toString(){
-        String res = "{";
-        res = "\n" + props.stream().map((prop) -> prop.getKey() + ":" + prop.getValue().toString() + ",\n").reduce(res, String::concat);
-        return res + "}";
+        String res = "[\n";
+        
+        for (List<Token> tokes : this){
+            res += "{\n";
+            for (Token token : tokes){
+                res += "\t";
+                res += ( !token.serialName.equals("") ? token.serialName + " : " : "") + token.serialValue;
+                res += ",\n";
+            }
+            res +=  "},\n";
+        }
+        
+        return res + "]";
     }
     
     public void fromString(CharSequence string){
         
-        String inputString = string.toString().trim();
+        List<List<Token>> t = Tokenizer.Tokenize(string.toString());
+        this.clear();
+        this.addAll( t );
         
-        //check if json_string root is an array
-        String pre = getWrappedChars(inputString,"{","}");
-        String[] parts = splitOutsideString( pre , ',' );
-        
-        for (String part : parts){
-            Object vn = null;
-            String propName = part.split(":")[0].trim();
-            propName = getWrappedChars(propName,"'","'");
-            propName = (propName==null? getWrappedChars(part.split(":")[0].trim(),"\"","\""): propName );
-            
-            String rawPropVal = part.split(":")[1].trim();
-            Object propVal = getWrappedChars(rawPropVal,"\"","\"");
-            propVal = (propVal == null ? getWrappedChars(rawPropVal,"'","'") : propVal );
-            if ( propVal == null ){
-                try{vn = (int)Integer.parseInt(rawPropVal);}catch (Exception e){ Log.Err(">> Not an int",rawPropVal,vn); };
-                if ( rawPropVal.startsWith("[") && rawPropVal.endsWith("]") ){
-                    propVal = getAsArrayTypedStrings(rawPropVal);
-                }
-                else if ( !"is_null".equals("is_"+vn) ){
-                    propVal = vn;
-                }
-                else{
-                    propVal = null;
-                }
-            }
-            set ( propName , propVal );
-        }
-        
-    }
-    
-    public void fromResultSet(ResultSet rset){
-        try {
-            int rowCount = rset.getMetaData().getColumnCount();
-            for (int i = 0; i < rowCount; i++) {
-                set(rset.getMetaData().getColumnLabel(i + 1).toLowerCase(), getResultSetTypedString(rset,i + 1));
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(JSON.class.getName()).log(Level.SEVERE, null, ex);
-        }
     }
     
 }
