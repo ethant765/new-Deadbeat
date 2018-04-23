@@ -10,9 +10,6 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import net.deadbeat.utility.Token;
 
 /**
  *
@@ -127,13 +124,6 @@ public class JSON extends ArrayList< List<Token> > {
         return null;
     }
     
-    //aliases
-    public <T> T n(int a) {
-        return (T)at(a);
-    }
-    public <T> T n(String s){
-        return (T)at(s);
-    }
     public <T> T n(){
         return (T)at( size()-1 );
     }
@@ -145,7 +135,6 @@ public class JSON extends ArrayList< List<Token> > {
     public int length(){
         return this.size();
     }
-    
     
     @Override
     public String toString(){

@@ -5,16 +5,13 @@
  */
 package deadbeatsocialnetworkserver;
 
-import java.io.File;
-import java.sql.Types.*;
-import net.deadbeat.utility.JSON;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
-import net.deadbeat.utility.Log;
-import net.deadbeat.utility.Tokenizer;
 import java.text.*;
-import net.deadbeat.utility.BinResource;
+
+// uses jar
+import net.deadbeat.utility.*;
 
 /**
  *

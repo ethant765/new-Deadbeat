@@ -11,15 +11,13 @@ import net.deadbeat.ui.CorePanel;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.List;
 import javax.swing.JFrame;
 import net.deadbeat.ui.CoreBar;
 import static net.deadbeat.core.Controller.cbar;
+
+// uses jar
 import net.deadbeat.utility.JSON;
 import net.deadbeat.utility.Log;
-import net.deadbeat.utility.Token;
-import net.deadbeat.utility.Tokenizer;
 
 /**
  *
