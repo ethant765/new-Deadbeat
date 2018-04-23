@@ -30,15 +30,15 @@ public class JSON extends ArrayList< List<Token> > {
         this.add(new ArrayList<>());
     }
     
-//    public void set(int index, String key, Object val){
-//        this.get(index).add( new Pair(key , val) );
-//    }
-//    
-//    public void set(String key,Object val){
-//        set(this.size()-1,key,val);
-//    }
-//    
-//  
+    public void set(int index, String key, Object val){
+        this.get(index).add( new Token(key,val.toString()) );
+    }
+    
+    public void set(String key,Object val){
+        set(this.size()-1,key,val);
+    }
+    
+  
     public <V,T> V get(T a){
         if ( a.getClass() == String.class ){
             return (V)at( (String)a );
@@ -49,6 +49,11 @@ public class JSON extends ArrayList< List<Token> > {
         else{
             return (V)at( (String)a );
         }
+    }
+    
+    public JSON getJSON(){
+        // automatically return first JSON if no indices are present
+        return getJSON(0);
     }
     
     public JSON getJSON(int index){
@@ -161,6 +166,60 @@ public class JSON extends ArrayList< List<Token> > {
         this.clear();
         this.addAll( t );
         
+    }
+    
+    public void fromResultSet(ResultSet rset) throws SQLException{
+        
+        this.clear();
+
+        try{
+            ResultSetMetaData resultMetaData = rset.getMetaData();
+            
+            while(rset.next()){
+                int numCols = resultMetaData.getColumnCount();
+                
+                JSON dataObj = new JSON();
+                String rawCString = "";
+                
+                rawCString += "{";
+                for(int i = 0; i < numCols; i++){
+                    String nameCol = resultMetaData.getColumnName(i + 1); //as i starts at 0
+                    
+                    switch (resultMetaData.getColumnType(i + 1)){
+                        case java.sql.Types.INTEGER:
+                            dataObj.set(nameCol, rset.getInt(nameCol));
+                            rawCString += "'" + nameCol + "' : '" + rset.getInt(nameCol) + "',";
+                            break;
+                        case java.sql.Types.VARCHAR:
+                            dataObj.set(nameCol, rset.getString(nameCol));
+                            rawCString += "'" + nameCol + "' : '" + rset.getString(nameCol) + "',";
+                            break;
+                        case java.sql.Types.DATE:
+                            dataObj.set(nameCol, rset.getDate(nameCol));
+                            rawCString += "'" + nameCol + "' : '" + rset.getDate(nameCol) + "',";
+                            break;
+                        case java.sql.Types.BLOB:
+                            dataObj.set(nameCol, rset.getBlob(nameCol));
+                            rawCString += "'" + nameCol + "' : '" + rset.getBlob(nameCol) + "',";
+                            break;
+                        default:
+                            dataObj.set(nameCol, rset.getObject(nameCol));
+                            rawCString += "'" + nameCol + "' : '" + rset.getObject(nameCol) + "',";
+                    }
+                }
+                
+                rawCString += "}";
+                
+                JSON j = this.getJSON();
+                Token t = new Token(rawCString);
+                List<Token> l = new ArrayList<Token>();
+                l.add(t);
+                j.add( l );
+            }
+        }
+        catch(Exception e){
+            System.err.println(e.getMessage());
+        }
     }
     
 }
