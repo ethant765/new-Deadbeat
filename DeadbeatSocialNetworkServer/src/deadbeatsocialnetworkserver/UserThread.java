@@ -46,48 +46,25 @@ public class UserThread implements Runnable{
         data = packet.getData();
         String Message = new String(data);
         String messageParts[] = SplitString(Message);
+
+        JSON stringObject = new JSON();
+        String holder = Tokenizer.getWrappedChars(Message, "[" , "]");
+        stringObject.fromString(holder);
+        String header = stringObject.get("enum");
         
-        //sendToUser(FriendsList(2)); //int clients user_ID
-        
-        if(String.valueOf(headers.LOGIN_NEW_USER).equals(messageParts[0])){
-           
-        }
-        else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(messageParts[0])){
-             returningUser(0); //int clients User_ID
-        }
-        else if(String.valueOf(headers.LOG_OFF).equals(messageParts[0])){
-            logOff();
-        }
-        else if(String.valueOf(headers.SHARE_SONG).equals(messageParts[0])){ 
-            //shareSong();
-        }
-        else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(messageParts[0])){
-            sendToUser(updateActiveUsers(0)); //int clients user_ID
-        }
-        else if(String.valueOf(headers.SHARED_SONGS_LIST).equals(messageParts[0])){
-            sendToUser(SharedSongsList(0)); //int user_ID (could be user or friends ID)
-        }
-        else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(messageParts[0])){
-            sendToUser(similarProfiles(1)); //int clients user_ID
-        }
-        else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(messageParts[0])){
-            sendToUser(updateMessageBoard());
-        }
-        else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(messageParts[0])){
-            addToMessageBoard(0 , "x", "y"); //userID, messageTitle, Message
-        }
-        else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(messageParts[0])){
-            sendToUser(updateFriendRequests(0)); //int clients user_ID
-        }
-        else if(String.valueOf(headers.FRIENDS_LIST).equals(messageParts[0])){
-            sendToUser(FriendsList(2)); //int clients user_ID
-        }
-        else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(messageParts[0])){
-            sendFriendRequest(0,0); // clients userID and user ID for user recieveing friend request
-        }
-        else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(messageParts[0])){
-            updateFriendRequestStatus(0,0,true); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
-        }
+        if(String.valueOf(headers.LOGIN_NEW_USER).equals(header)) newUser(stringObject);
+        else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(header)) returningUser(stringObject); //int clients User_ID
+        else if(String.valueOf(headers.LOG_OFF).equals(header)) logOff();
+        else if(String.valueOf(headers.SHARE_SONG).equals(header)) shareSong(stringObject);
+        else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(header)) sendToUser(updateActiveUsers(stringObject)); //int clients user_ID
+        else if(String.valueOf(headers.SHARED_SONGS_LIST).equals(header)) sendToUser(SharedSongsList(stringObject)); //int user_ID (could be user or friends ID)
+        else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(header)) sendToUser(similarProfiles(stringObject)); //int clients user_ID
+        else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(header)) sendToUser(updateMessageBoard());
+        else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(header)) addToMessageBoard(stringObject); //userID, messageTitle, Message
+        else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(header)) sendToUser(updateFriendRequests(stringObject)); //int clients user_ID
+        else if(String.valueOf(headers.FRIENDS_LIST).equals(header)) sendToUser(FriendsList(stringObject)); //int clients user_ID
+        else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(stringObject); // clients userID and user ID for user recieveing friend request
+        else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(stringObject); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
         else{
             //error
         }
@@ -155,7 +132,9 @@ public class UserThread implements Runnable{
      //recieves the data from the client for returning user
     //checks user credentials
    //adds IPaddress to active users table in DB
-    private void returningUser(int ID){
+    private void returningUser(JSON obj){
+        int ID = 0;
+        
         //get resultset of userName data from the databse
         String value = "*";
         String table = "Profiles";
@@ -169,16 +148,16 @@ public class UserThread implements Runnable{
                 sendToUser(result);
                 
                 //send a list of their friends to the user
-                sendToUser(FriendsList(ID));
+                sendToUser(FriendsList(obj));
                 
                 //send list of recieved but not accepted/rejected friend requests
-                sendToUser(updateFriendRequests(ID));
+                sendToUser(updateFriendRequests(obj));
                 
                 //send list of messageboard items - ResultSet updateMessageBoard()
                 sendToUser(updateMessageBoard());
                 
                 //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
-                sendToUser(updateActiveUsers(ID));
+                sendToUser(updateActiveUsers(obj));
                 
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
@@ -199,13 +178,13 @@ public class UserThread implements Runnable{
     //removes any messages the user has put on the message board while
     private void logOff(){
         //call function to clear users message board messages
-        //uses IPadress so needs calling before clearing users IP
+        //uses IPadress so needs calling before clearing users IP from active members table
         removeUserMessageBoardMessages();
         
-        String tableToEdit = "Members";//members table is the table which stores active members
-        String conditionForEdit = "IPAddress = " + userIP; // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
-
-        //also remove users messages from the message board
+        //members table is the table which stores active members
+        String tableToEdit = "Members";
+        // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
+        String conditionForEdit = "IPAddress = " + userIP; 
         
         dataChange.DeleteRecord(tableToEdit, conditionForEdit);
     }
@@ -232,12 +211,22 @@ public class UserThread implements Runnable{
     
     //-------------------------------------------enum functions-----------------------------------------------------
     //allows the client to share a song
-    private void shareSong(int userID, int songID, String songName, String Artist, Date ReleaseDate, String Album/*Blob Song*/){
-        
+    private void shareSong(JSON obj){
+        int userID = 0;
+        int songID = 0;
+        String songName = null;
+        String Artist = null;
+        Date ReleaseDate = null;
+        String Album = null;
+        /*Blob Song*/
     }
     
     //allows the client to send a friend request to another user who isn't already their friend
-    private void sendFriendRequest(int clientUserID, int otherUsersID){
+    private void sendFriendRequest(JSON obj){
+        int clientUserID = 0;
+        int otherUsersID = 0;
+        
+        
         String table = "Friends";
         String cols = "(User_ID, Friend_ID, Status_ID)";
         String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
@@ -245,7 +234,12 @@ public class UserThread implements Runnable{
     }
     
     //chanegs the status of a friend request (accept or reject)
-    private void updateFriendRequestStatus(int clientUserID, int FriendRequestUserID, boolean accepted){
+    private void updateFriendRequestStatus(JSON obj){
+        int clientUserID = 0;
+        int FriendRequestUserID = 0;
+        boolean accepted = false;
+        
+        
         String newStatus;
         if(accepted == true)
             newStatus = "con"; //connected
@@ -259,7 +253,12 @@ public class UserThread implements Runnable{
     }
         
     //adds the users message to the message board for their friends to see
-    private void addToMessageBoard(int userID, String title, String message){
+    private void addToMessageBoard(JSON obj){
+        int userID = 0;
+        String title = null;
+        String message = null;
+        
+        
         String table = "MessageBoard";
         String cols = "(User_ID, MessageTitle, Messages)";
         String vals = "(" + userID + ", '" + title + "', '" + message + "')";
@@ -267,7 +266,10 @@ public class UserThread implements Runnable{
     }
     
     //sends client list of all currently online users
-    private ResultSet updateActiveUsers(int userID){
+    private ResultSet updateActiveUsers(JSON obj){
+        int userID = 0;
+        
+        
         String select = "Members.User_ID, Profiles.UserName";
         String from = "FROM Profiles RIGHT JOIN Members ON Profiles.User_ID = Members.User_ID";
         String where = "WHERE Profiles.User_ID <> " + userID;
@@ -276,16 +278,22 @@ public class UserThread implements Runnable{
     }
     
     //sends the client a list of songs shared by their specified friend or themself
-    private ResultSet SharedSongsList(int UserID){        
+    private ResultSet SharedSongsList(JSON obj){
+        int userID = 0;
+        
+    
         String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
         String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
-        String where = "ProfileSharedSongs.USER_ID = " + UserID;
+        String where = "ProfileSharedSongs.USER_ID = " + userID;
         
         return dataChange.GetRecord(select, from, where);
     }
     
     //sends the client a list of all other profiles with similar music preferences
-    private ResultSet similarProfiles(int userID){
+    private ResultSet similarProfiles(JSON obj){
+        int userID = 0;
+        
+        
         String sqlCmd = "select Profiles.User_ID, Profiles.UserName " +
                 "from Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID " +
                 "where ProfileMusicPreferences.User_ID <> " + userID +
@@ -306,7 +314,10 @@ public class UserThread implements Runnable{
     }
     
     //sends a list to the client of all their friend requests
-    private ResultSet updateFriendRequests(int userID){
+    private ResultSet updateFriendRequests(JSON obj){
+        int userID = 0;
+        
+        
         String vals = "Profiles.User_ID, Profiles.UserName";
         String tables = "Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID";
         String condition = "Friends.Friend_ID =" + userID + "AND Status_ID = 'Wait'";
@@ -316,15 +327,17 @@ public class UserThread implements Runnable{
     
     
     //sends a list to the client of their friends - (friendsID and friends userName)
-    private ResultSet FriendsList(int UserID){
+    private ResultSet FriendsList(JSON obj){
+        int userID = (int)obj.get("USER_ID");
+                
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
-               "WHERE Friends.User_ID <> " + UserID +
+               "WHERE Friends.User_ID <> " + userID +
                " AND Friends.Status_ID = 'con') " +
                "UNION " +
                "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.Friend_ID " +
-               "WHERE Friends.Friend_ID <> " + UserID +
+               "WHERE Friends.Friend_ID <> " + userID +
                " AND Friends.Status_ID = 'con')";
 
         return dataChange.GetCustomRecord(sqlCmd);
@@ -333,17 +346,21 @@ public class UserThread implements Runnable{
     private void testFunction(String testing){
         String testing2 = null;
         JSON test = new JSON();
+        
         testing2 = Tokenizer.getWrappedChars(testing,"[","]");
         testing2 += "}";
         
         System.out.println(testing2);
         
+        
         test.fromString(testing2);
-        String name = test.get("USERNAME");
         
-        int id = Integer.getInteger(test.get("USER_ID"));
+        String name = ((String[])test.get("USERNAME"))[0];
         
-        System.out.println(name + ", " + id);
+       //id = (int)test.get("USER_ID");
+        System.out.println(name);
+        //System.out.println(id);
+        
     }
     
 }
