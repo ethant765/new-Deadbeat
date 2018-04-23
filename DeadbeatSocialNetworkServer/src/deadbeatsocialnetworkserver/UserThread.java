@@ -86,7 +86,6 @@ public class UserThread implements Runnable{
             
             //convert json object to string then string to bytes ready to send to client
             String message = jsonString.toString();
-            System.out.println(message);
             
             //send message back to the client
             byte[] data = message.getBytes();
