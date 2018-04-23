@@ -10,7 +10,8 @@ import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
 import net.deadbeat.utility.Tokenizer;
-import org.json.JSONArray;
+import org.JSON.JSONArray;
+
 
 /**
  *
@@ -44,13 +45,12 @@ public class UserThread implements Runnable{
         //get the data sent from the user on their connection to the server
         byte[] data = new byte[1024];
         data = packet.getData();
-        String Message = new String(data);
-        String messageParts[] = SplitString(Message);
+        String Message = '['+new String(data)+']';
+        //String messageParts[] = SplitString(Message);
 
         JSON stringObject = new JSON();
-        String holder = Tokenizer.getWrappedChars(Message, "[" , "]");
-        stringObject.fromString(holder);
-        String header = stringObject.get("enum");
+        stringObject.fromString(Message);
+        String header = stringObject.getJSON().<String>val("enum");
         
         if(String.valueOf(headers.LOGIN_NEW_USER).equals(header)) newUser(stringObject);
         else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(header)) returningUser(stringObject); //int clients User_ID
@@ -96,7 +96,7 @@ public class UserThread implements Runnable{
             
            
             
-            resultSetToJson test = new resultSetToJson();
+             resultSetToJson test = new resultSetToJson();
              JSONArray jArray = new JSONArray();
              jArray = test.convertToJSON(sendData);
              String message = jArray.toString();
@@ -148,7 +148,7 @@ public class UserThread implements Runnable{
                 sendToUser(result);
                 
                 //send a list of their friends to the user
-                sendToUser(FriendsList(obj));
+                //sendToUser(FriendsList(obj));
                 
                 //send list of recieved but not accepted/rejected friend requests
                 sendToUser(updateFriendRequests(obj));
@@ -328,7 +328,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(JSON obj){
-        int userID = (int)obj.get("USER_ID");
+        int userID = obj.getJSON().<Integer>val("USER_ID");
                 
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +

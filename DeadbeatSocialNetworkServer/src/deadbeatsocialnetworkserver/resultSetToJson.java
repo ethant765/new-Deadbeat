@@ -6,7 +6,8 @@
 package deadbeatsocialnetworkserver;
 
 import java.sql.*;
-import org.json.*;
+import org.JSON.JSONArray;
+import org.JSON.JSONObject;
 
 /**
  *
