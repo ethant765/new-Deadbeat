@@ -1,13 +1,7 @@
 /SocialNetworkServer/DeadbeatSocialNetworkServer/nbproject/private/
 /DeadbeatSocialNetworkServer/nbproject/private/
-<<<<<<< HEAD
 /DeadbeatSocialNetworkServer/build/
-<<<<<<< HEAD
 /DeadbeatSocialNetworkServer/dist/
 /datagramClient/dist/
-=======
-/DeadbeatSocialNetworkServer/build/
->>>>>>> parent of 1d70ba7... fixed libs, fixed json
-=======
-/DeadbeatSocialNetworkServer/dist/
->>>>>>> parent of f9c86ca... Merge branch 'master' of https://github.com/daryl-cecile/Deadbeat
+/Deadbeat Package/nbproject/private/
+/Deadbeat Package/build/
