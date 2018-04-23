@@ -5,6 +5,8 @@
  */
 package deadbeatsocialnetworkserver;
 
+import java.io.File;
+import java.sql.Types.*;
 import net.deadbeat.utility.JSON;
 import java.net.*;
 import java.sql.ResultSet;
@@ -12,6 +14,7 @@ import java.util.*;
 import net.deadbeat.utility.Log;
 import net.deadbeat.utility.Tokenizer;
 import java.text.*;
+import net.deadbeat.utility.BinResource;
 
 /**
  *
@@ -209,12 +212,9 @@ public class UserThread implements Runnable{
             int songID = obj.getJSON().getInt("SONG_ID");
             String songName = obj.getJSON().getString("SONG_NAME");
             String Artist = obj.getJSON().getString("ARTIS");
-            
-            
             Date ReleaseDate = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("RELEASE_DATE"));
-            
-            
             String Album = obj.getJSON().getString("ALBUM");
+            Object songFile = BinResource.lookup(obj.getJSON().getString("SONG"));
         } catch(Exception e){System.err.println(e.getMessage());}
         
         /*Blob Song*/
