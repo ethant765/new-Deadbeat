@@ -150,7 +150,7 @@ public class UserThread implements Runnable{
                 dataChange.InsertRecord(tableName, tableCols, Values);
 
                 //get user id in result set to send back to client
-                String ReturnID = "*";
+                String ReturnID = "User_ID";
                 //use same table as insert operation above
                 String condition = "UserName = " + userName;
 
@@ -226,21 +226,30 @@ public class UserThread implements Runnable{
         try{
             //create a JSON object to store all the required information
             JSON returnData = new JSON();
-
-            //send a list of their friends to the user
-            FriendsList();
+            
+            //create a result set list to use when creating a json string of it
+            List<ResultSet> resultsHolder = new ArrayList<>();
+            
+            //add the users passed data result set into the list
+            resultsHolder.add(userData);
+            
+            //add the users friends list to the resultSet list
+            resultsHolder.add(FriendsList());
 
             //send list of recieved but not accepted/rejected friend requests
-            updateFriendRequests();
+            resultsHolder.add(updateFriendRequests());
 
             //send list of messageboard items - ResultSet updateMessageBoard()
-            updateMessageBoard();
+            resultsHolder.add(updateMessageBoard());
 
             //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
-            updateActiveUsers();
+            resultsHolder.add(updateActiveUsers());
             
             //add the users IP address to the active members table
             addIP(obj.getJSON().getInt("USER_ID"));
+            
+            //turn all the resultSet list data into a JSON string ready to be sent
+            returnData.fromMergedResultSets(resultsHolder);
 
             //send this data to the function which will return it to client
             sendToUser(returnData);
