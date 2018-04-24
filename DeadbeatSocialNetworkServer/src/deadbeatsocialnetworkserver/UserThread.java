@@ -29,12 +29,26 @@ public class UserThread implements Runnable{
     DatagramPacket packet;
     InetAddress userIP;
     int userPort;
+    int clientUsersID; //set based on IPaddress when that is stored for active users table
     
     UserThread(DatagramSocket sok, DatagramPacket pak){
         socket = sok;
         packet = pak;
         userIP = pak.getAddress();
         userPort = pak.getPort();
+        
+        //test for active user - if they are set their UserID, otherwise this will be set during their login process
+        String table = "members";
+        String select = "User_ID";
+        String condition = "IPAddress = " + userIP;
+        ResultSet rs = dataChange.GetRecord(select, table, condition);
+        
+        try{
+            if(rs != null){
+                clientUsersID = rs.getInt("User_ID");
+            }
+        }catch(Exception e){//Log.Throw(e);}
+        }
         
     }
     
@@ -67,14 +81,9 @@ public class UserThread implements Runnable{
         else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(stringObject); 
         else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(stringObject); 
         else{//handle error of incorrect or no header infromation in recieved string
-            try{
-                String error = "No header, or incorrect header information";
-                byte[] errorData = error.getBytes();
-                DatagramPacket dgp = new DatagramPacket(errorData, errorData.length, userIP, userPort);
-                socket.send(dgp);
-            }catch(Exception e){System.err.println(e.getMessage());}
+            ErrorToUser("No header, or incorrect header infromation provided");
         }
-    }    
+    }
 
     //function used to return data to the client
     private void sendToUser(ResultSet sendData){
@@ -94,7 +103,19 @@ public class UserThread implements Runnable{
             
         }catch(Exception e){System.err.println(e.getMessage());}
     }
-
+    
+    //if there is an error performing an operation, send user a message expressing this error
+    private void ErrorToUser(String message){
+        try{
+            //create return JSON message using string provided by function where error occured
+            String error = "{'ERROR': '" + message + "'}";
+            byte[] errorData = error.getBytes();
+            DatagramPacket dgp = new DatagramPacket(errorData, errorData.length, userIP, userPort);
+            socket.send(dgp);
+            
+            //Thread.stop();
+        }catch(Exception e){System.err.println(e.getMessage());}
+    }
     
     
     
@@ -106,29 +127,36 @@ public class UserThread implements Runnable{
     private void newUser(JSON obj){
         
         try{
-            //get data for the new user from the recieved json string object
-            int id = newUserID();
-            String userName = obj.getJSON().getString("USERNAME");
-            String PlaceOfBirth = obj.getJSON().getString("PLACE_OF_BIRTH");
-            Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("DOB"));
-            Object imageFile = BinResource.lookup(obj.getJSON().getString("PROFILE_IMAGE")); 
-            String Password = obj.getJSON().getString("PASSWORD");
-            
-            //insert the data into the database for the user
-            String tableName = "Profiles";
-            String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage, Password)";
-            String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', " + imageFile + ", '" + Password + "')";
-            dataChange.InsertRecord(tableName, tableCols, Values);
-            
-            //get user id in result set to send back to client
-            String ReturnID = "User_ID";
-            //use same table as insert operation above
-            String condition = "UserName = " + userName;
-            sendToUser(dataChange.GetRecord(ReturnID, tableName, condition));//send users new ID back to client
-            
-            //call function to send all other required login infromation to the client
-            loginInfoSend(obj);
-            
+            String ErrorTable = "Profiles";
+            String ErrorSelect = "*";
+            String ErrorWhere = "UserName = '" + obj.getJSON().getString("USERNAME") + "'";
+            if(dataChange.GetRecord(ErrorSelect, ErrorTable, ErrorWhere) != null){//test to see if username surplied has been taken
+                ErrorToUser("UserName has been taken already!");
+            }
+            else{
+                //get data for the new user from the recieved json string object
+                int id = newUserID();
+                String userName = obj.getJSON().getString("USERNAME");
+                String PlaceOfBirth = obj.getJSON().getString("PLACE_OF_BIRTH");
+                Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("DOB"));
+                Object imageFile = BinResource.lookup(obj.getJSON().getString("PROFILE_IMAGE")); 
+                String Password = obj.getJSON().getString("PASSWORD");
+
+                //insert the data into the database for the user
+                String tableName = "Profiles";
+                String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage, Password)";
+                String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', " + imageFile + ", '" + Password + "')";
+                dataChange.InsertRecord(tableName, tableCols, Values);
+
+                //get user id in result set to send back to client
+                String ReturnID = "User_ID";
+                //use same table as insert operation above
+                String condition = "UserName = " + userName;
+                sendToUser(dataChange.GetRecord(ReturnID, tableName, condition));//send users new ID back to client
+
+                //call function to send all other required login infromation to the client
+                loginInfoSend(obj);
+            }
         }catch(Exception e){System.err.println(e.getMessage());}
     }
     //get a new unique User_ID for the user
@@ -161,9 +189,7 @@ public class UserThread implements Runnable{
             //get resultset of userName data from the databse
             String value = "*";
             String table = "Profiles";
-            
-            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " + "";//getHash(obj.getJSON().getString("PASSWORD"));
-            
+            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " ;//getHash(obj.getJSON().getString("PASSWORD"));
             ResultSet result = dataChange.GetRecord(value, table, Condition);
        
             //if result isn't null then it must have found a user, and their password has matched
@@ -174,6 +200,9 @@ public class UserThread implements Runnable{
                 //call function which handles sending remaining login info
                 loginInfoSend(obj);
             }
+            else{
+                ErrorToUser("No profile found with that username and password combination!");
+            }
         }catch(Exception e){System.err.println(e.getMessage());}
         
     }
@@ -183,6 +212,8 @@ public class UserThread implements Runnable{
         String cols = "(IPAddress, User_ID)";
         String vals = "(" + userIP + ", " + ID + ")";
         dataChange.InsertRecord(insertInto, cols, vals);
+        
+        clientUsersID = ID;
     }
     
     //when a new user creates an accout or an exisint user signs in, this is info relayed back to client
@@ -220,16 +251,10 @@ public class UserThread implements Runnable{
     }
     //when user logs off removes any messages which they put on the message board
     private void removeUserMessageBoardMessages(){
-        //from users IP get users ID
-        String selectVals = "User_ID";
-        String selectTable = "Members";
-        String SelectCondition = "IPAddress = " + userIP;
-        ResultSet result = dataChange.GetRecord(selectVals, selectTable, SelectCondition);
-        
         try{
             //use users ID to remove any messages they have posted on the message board
             String removeTable = "MessageBoard";
-            String removeCondition = "User_ID = " + result.getInt("User_ID");
+            String removeCondition = "User_ID = " + clientUsersID;
             dataChange.DeleteRecord(removeTable, removeCondition);
         }catch(Exception e){System.err.println(e.getMessage());}
     }
@@ -244,7 +269,7 @@ public class UserThread implements Runnable{
     private void shareSong(JSON obj){        
         try{
             //get data out of JSON string object
-            int userID = obj.getJSON().getInt("USER_ID");
+            int userID = clientUsersID;
             int songID = songIdGen();
             String songName = obj.getJSON().getString("SONG_NAME");
             String Artist = obj.getJSON().getString("ARTIS");
@@ -284,7 +309,7 @@ public class UserThread implements Runnable{
     
     //allows the client to send a friend request to another user who isn't already their friend
     private void sendFriendRequest(JSON obj){        
-        int clientUserID = obj.getJSON().getInt("USER_ID");
+        int clientUserID = clientUsersID;
         int otherUsersID = obj.getJSON().getInt("FRIEND_USER_ID");
         
         
@@ -297,7 +322,7 @@ public class UserThread implements Runnable{
     
     //chanegs the status of a friend request (accept or reject)
     private void updateFriendRequestStatus(JSON obj){
-        int clientUserID = obj.getJSON().getInt("USER_ID");
+        int clientUserID = clientUsersID;
         int FriendRequestUserID = obj.getJSON().getInt("FRIEND_USER_ID");
         boolean accepted = Boolean.valueOf(obj.getJSON().getString("ACCEPTED"));
 
@@ -315,7 +340,7 @@ public class UserThread implements Runnable{
         
     //adds the users message to the message board for their friends to see
     private void addToMessageBoard(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+        int userID = clientUsersID;
         String title = obj.getJSON().getString("MESSAGE_TITLE");
         String message = obj.getJSON().getString("MESSAGE");
         
@@ -328,7 +353,7 @@ public class UserThread implements Runnable{
     
     //sends client list of all currently online users
     private ResultSet updateActiveUsers(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+        int userID = clientUsersID;
         
         String select = "Members.User_ID, Profiles.UserName";
         String from = "FROM Profiles RIGHT JOIN Members ON Profiles.User_ID = Members.User_ID";
@@ -351,7 +376,7 @@ public class UserThread implements Runnable{
     
     //sends the client a list of all other profiles with similar music preferences
     private ResultSet similarProfiles(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+        int userID = clientUsersID;
         
         String sqlCmd = "select Profiles.User_ID, Profiles.UserName " +
                 "from Profiles LEFT JOIN ProfileMusicPreferences ON Profiles.User_ID = ProfileMusicPreferences.User_ID " +
@@ -374,7 +399,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of all their friend requests
     private ResultSet updateFriendRequests(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+        int userID = clientUsersID;
         
         String vals = "Profiles.User_ID, Profiles.UserName";
         String tables = "Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID";
@@ -386,7 +411,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+        int userID = clientUsersID;
                 
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
