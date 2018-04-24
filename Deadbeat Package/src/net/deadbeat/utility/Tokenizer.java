@@ -78,9 +78,9 @@ public class Tokenizer {
             }
             else if ( c == '{' || c == '[' ){
                 current = "";
-                Pair enclosedContent = Tokenizer.getEnclosedContent(scannedString, c, i);
+                Pair<String,Integer> enclosedContent = Tokenizer.getEnclosedContent(scannedString, c, i);
                 tokens.add( new Token( enclosedContent.getKey() ) );
-                i = (int)enclosedContent.getValue();
+                i = enclosedContent.getValue();
             }
             
             
@@ -128,7 +128,7 @@ public class Tokenizer {
         return fTokenList;
     }
     
-    private static Pair getEnclosedContent(String input,char openingChar,int startPos){
+    private static Pair<String,Integer> getEnclosedContent(String input,char openingChar,int startPos){
         String soFarRes = "" + openingChar;
         TokenType stringOpen = null;
         int LSBC = (openingChar == '[' ? 1 : 0);
@@ -167,7 +167,7 @@ public class Tokenizer {
             
         }
         
-        return (new Pair(soFarRes, pos));
+        return (new Pair<>(soFarRes, pos));
     }
     
     public static boolean isQuote(char c){

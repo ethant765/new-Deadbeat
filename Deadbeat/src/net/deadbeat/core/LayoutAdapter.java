@@ -22,7 +22,7 @@ import net.deadbeat.ui.CoreRoundedTextbox;
  *
  * @author darylcecile
  */
-public class Controller {
+public class LayoutAdapter {
     
     public static CoreImage logo;
     public static CoreRoundedTextbox searchbox;
@@ -38,6 +38,19 @@ public class Controller {
     public static final int CBAR_DIAMETER = 13;
     public static final int CBAR_HEIGHT = 23;
     
+    
+    /**
+     * Initialises main components, and updates their state.
+     * 
+     * This method should only be called once. When called, the main
+     * components are registered and their states are updated to
+     * reflect the current application state.
+     * 
+     * @param cpanel The root panel which holds all other elements
+     * @param copanel The overlay panel which holds music info
+     * @param dashboard 
+     * @param titleBar The drag-enabled top bar with control buttons
+     */
     public static void prepareElements(CorePanel cpanel,CoreOverlayPanel copanel,Home dashboard,CoreBar titleBar){
         
         logo = new CoreImage("logo.png");
@@ -88,6 +101,13 @@ public class Controller {
         
     }
     
+    /**
+     * Re-paints on-screen UI elements.
+     * 
+     * Forces the main panels to resize and re-paint,
+     * redrawing any images and interactive elements along
+     * the way
+     */
     public static void reflow(){
         final int sidebarWidth = (dash.getWidth()/100) * 25;
         

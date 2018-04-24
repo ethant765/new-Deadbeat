@@ -22,7 +22,7 @@ import net.deadbeat.utility.*;
 //Thread class which is resposible for each client connected to the server
 public class UserThread implements Runnable{
     
-    dataHeader headers;
+    DataHeader headers;
     DBInteractions dataChange = new DBInteractions();
     
     DatagramSocket socket;
@@ -53,7 +53,7 @@ public class UserThread implements Runnable{
         opSuccsess = true; // default to true and chenge to false later if an error occured during an operation
     }
     
-    public UserThread(dataHeader headers){
+    public UserThread(DataHeader headers){
         this.headers = headers;
     }
     

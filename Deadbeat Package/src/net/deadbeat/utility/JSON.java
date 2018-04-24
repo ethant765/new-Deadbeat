@@ -138,19 +138,19 @@ public class JSON extends ArrayList< List<Token> > {
     
     @Override
     public String toString(){
-        String res = "[\n";
+        String res = "";//"[";
         
         for (List<Token> tokes : this){
-            res += "{\n";
+            res += "{";
             for (Token token : tokes){
-                res += "\t";
+                res += "";
                 res += ( !token.serialName.equals("") ? token.serialName + " : " : "") + token.serialValue;
-                res += ",\n";
+                res += ",";
             }
-            res +=  "},\n";
+            res +=  "},";
         }
         
-        return res + "]";
+        return res ;//+ "]";
     }
     
     public void fromString(CharSequence string){
@@ -159,6 +159,16 @@ public class JSON extends ArrayList< List<Token> > {
         this.clear();
         this.addAll( t );
         
+    }
+    
+    public void fromMergedResultSets(List<ResultSet> rsets) throws SQLException{
+        List<Token> lt = new ArrayList<>();
+        for (ResultSet r : rsets){
+            JSON j = new JSON();
+            j.fromResultSet(r);
+            lt.add( new Token( j.toString() ) );
+        }
+        this.add(lt);
     }
     
     public void fromResultSet(ResultSet rset) throws SQLException{

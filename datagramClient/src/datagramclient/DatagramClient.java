@@ -38,8 +38,8 @@ public class DatagramClient {
             DatagramPacket recievePacket = new DatagramPacket(backData, backData.length);
             client.receive(recievePacket);
             backData = recievePacket.getData();
-            String upperMessage = new String(backData);
-            System.out.println(upperMessage);
+            String upperMessage = (new String(backData,"UTF-8")).substring(0,recievePacket.getLength());
+            Log.Out(upperMessage);
 
             
         }catch(IOException e){

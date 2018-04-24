@@ -36,7 +36,7 @@ public class UserModel {
             System.arraycopy( raw_email_bytes , 0, raw, 0, raw_email_bytes.length);            
             System.arraycopy( raw_password_bytes , 0, raw, raw_email_bytes.length, raw_password_bytes.length);
             
-            res = Security.makeKey(new String(raw,"UTF-8"));
+            res = Security.hash(new String(raw,"UTF-8"));
         } catch (Exception ex) {
             Logger.getLogger(UserModel.class.getName()).log(Level.SEVERE, null, ex);
         }
