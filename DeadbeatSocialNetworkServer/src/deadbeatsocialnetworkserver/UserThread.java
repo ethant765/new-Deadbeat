@@ -5,7 +5,7 @@
  */
 package deadbeatsocialnetworkserver;
 
-import net.deadbeat.utility.JSON;
+import net.deadbeat.utility.*;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
@@ -101,7 +101,7 @@ public class UserThread implements Runnable{
             DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
             socket.send(sendPacket);
             
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //if there is an error performing an operation, send user a message expressing this error
@@ -232,6 +232,7 @@ public class UserThread implements Runnable{
                 sendToUser(updateActiveUsers(obj));
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
+
                 addIP(obj.getJSON().getInt("USER_ID"));
     }
     
@@ -256,7 +257,7 @@ public class UserThread implements Runnable{
             String removeTable = "MessageBoard";
             String removeCondition = "User_ID = " + clientUsersID;
             dataChange.DeleteRecord(removeTable, removeCondition);
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
     
     

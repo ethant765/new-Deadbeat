@@ -5,6 +5,7 @@
  */
 package deadbeatsocialnetworkserver;
 import java.sql.*;
+import net.deadbeat.utility.Log;
 
 /**
  *
@@ -66,7 +67,7 @@ public class DBInteractions {
             else{
                 stmt.executeUpdate(SQLQuery);
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
         return res;
     }
 }

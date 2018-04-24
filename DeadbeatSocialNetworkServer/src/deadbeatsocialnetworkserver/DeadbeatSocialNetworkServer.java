@@ -6,6 +6,7 @@
 package deadbeatsocialnetworkserver;
 import java.net.*;
 import java.io.*;
+import net.deadbeat.utility.Log;
 
 
 /**
@@ -42,6 +43,8 @@ public class DeadbeatSocialNetworkServer {
                 newClient.start();
             }
             
-        }catch(IOException e){System.err.println(e.getMessage());}
+        }catch(IOException e){
+            Log.Throw(e);
+        }
     }
 }
