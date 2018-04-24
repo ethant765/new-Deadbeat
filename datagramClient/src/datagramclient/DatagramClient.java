@@ -6,6 +6,7 @@
 package datagramclient;
 import java.io.*;
 import java.net.*;
+import net.deadbeat.utility.Log;
 /**
  *
  * @author n0688008
@@ -42,7 +43,7 @@ public class DatagramClient {
 
             
         }catch(IOException e){
-            System.err.println("Error! - " + e.getMessage());
+            Log.Throw(e);
         }    
     }
     

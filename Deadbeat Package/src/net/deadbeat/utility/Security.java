@@ -5,36 +5,30 @@
  */
 package net.deadbeat.utility;
 
-import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-/***************************************************************************************
-*    Title: Java SecretKey Encode/Decode
-*    Author: Jabari
-*    Date: 13/04/18
-*    Code version: 1
-*    Availability: https://stackoverflow.com/questions/5355466/converting-secret-key-into-a-string-and-vice-versa
-*
-***************************************************************************************/
-
+/**
+ *
+ * @author darylcecile
+ */
 public class Security {
     
-    public static String makeKey(String key){
-        try{
-            byte[] decodedKey = key.getBytes("UTF-8");
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            md.update(decodedKey);
-            String res = Base64.getEncoder().encodeToString(md.digest());
-            return res.substring(0,res.length() - 1);
-        }catch(Exception ex){
-            return "";
+    // MUST NOT CHANGE
+    public final static int HASH_SEED = 59;
+    public final static int HASH_MULTIPLIER = 97;
+    
+    public static String hash(String input){
+        
+        int h = HASH_SEED;
+        for ( char c : input.toCharArray() ){
+            h = h*HASH_MULTIPLIER + c;
         }
+        
+        int n = (int) ( Math.ceil(32 / String.valueOf(h).length()) );
+        String r = String.join("", Collections.nCopies( n+1 , String.valueOf(h) ));
+        
+        return r.substring(0, 32);
     }
 }

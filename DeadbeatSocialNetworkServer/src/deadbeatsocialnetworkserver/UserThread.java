@@ -102,7 +102,7 @@ public class UserThread implements Runnable{
             jsonString.fromResultSet(sendData);
             Log.Out(jsonString.getString("USERNAME"));
             
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
 
     
@@ -154,7 +154,7 @@ public class UserThread implements Runnable{
                 //add the user to the members table - Stores their IP and logs them as an active user
                 addIP(ID);
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
         
     }
     //adds new users IP to the active member sql table
@@ -192,7 +192,7 @@ public class UserThread implements Runnable{
             String removeTable = "MessageBoard";
             String removeCondition = "User_ID = " + result.getInt("User_ID");
             dataChange.DeleteRecord(removeTable, removeCondition);
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
     
     
