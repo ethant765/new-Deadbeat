@@ -5,6 +5,8 @@
  */
 package net.deadbeat.utility;
 
+import net.deadbeat.utility.Tokenizer.TokenType;
+
 /**
  *
  * @author darylcecile
@@ -17,7 +19,7 @@ public class JSONProperty {
     private final String Value;
     
     public JSONProperty(String key,String value,Tokenizer.TokenType dataType){
-        Key = key;
+        Key = Tokenizer.removeQuotation(key);
         Value = value;
         
         if (dataType == Tokenizer.TokenType.UNDEFINED){
@@ -62,6 +64,20 @@ public class JSONProperty {
     
     public <T> T get(){
         return (T)Value;
+    }
+    
+    public String getValue(){
+        
+        if ( TokenType.NULL == data_type ){
+            return null;
+        }
+        else switch (data_type) {
+            case STRING:
+                return Tokenizer.removeQuotation( this.<String>get() );
+            default:
+                return get();
+        }
+        
     }
     
 }

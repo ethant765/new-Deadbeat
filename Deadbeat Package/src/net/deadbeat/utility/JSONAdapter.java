@@ -8,7 +8,6 @@ package net.deadbeat.utility;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,6 +21,12 @@ public class JSONAdapter extends JSONCollection {
         JSONAdapter ja = new JSONAdapter();
         ja.fromString("{'name':'bob','age':24,'songs':[12,42]}");
         
+        Log.Out( ja.get(0).get("name").<String>get() );
+        
+    }
+    
+    public JSONObject get(){
+        return this.get(0);
     }
     
     public final static String buildString(JSONCollection collection , boolean formatted){
@@ -53,7 +58,17 @@ public class JSONAdapter extends JSONCollection {
         
         List<String> t = Tokenizer.Tokenize(string.toString());
         
-        Log.Out("Lists", String.join( "\n" , t) );
+        //remove parenthesies
+        t.remove(t.size()-1);
+        t.remove(0);
+        
+        this.add( new JSONObject());
+        
+        for (int i=0; i < t.size(); i+=2){
+            String n = t.get(i);
+            String k = t.get(i+1);
+            this.get(0).add(n, k);
+        }
         
     }
     

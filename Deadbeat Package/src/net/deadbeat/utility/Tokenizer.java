@@ -61,12 +61,12 @@ public class Tokenizer {
                 stringOpen = quoteVal(c);
             }
             else if ( c == ':' && stringOpen == null ){
-                if ( !"".equals(current) ) tokens.add((current));
-                tokens.add((""+c));
+                if ( !"".equals(current) && !current.trim().equals(":") ) tokens.add((current));
+                //tokens.add((""+c));
                 current = "";
             }
             else if ( c == ',' && stringOpen == null ){
-                if ( !"".equals(current) ) {
+                if ( !"".equals(current) && !current.trim().equals(""+c) ) {
                     if ( !current.endsWith(""+c) ){
                         tokens.add((current));
                     }
@@ -74,7 +74,7 @@ public class Tokenizer {
                         tokens.add((current.substring(0, current.length()-1)));
                     }
                 }                
-                if ( !(""+c).equals(current) ) tokens.add((""+c));
+                if ( !(""+c).equals(current.trim()) ) tokens.add((""+c));
                 current = "";
             }
             else if ( c == '{' || c == '[' ){
@@ -87,6 +87,7 @@ public class Tokenizer {
             
         }
         
+        if ( current.trim().equals("]") ) current = "";
         if ( !"".equals(current) ) tokens.add((current));
         
         if ( input.charAt(0) == '{' ) tokens.add(("}"));
@@ -95,7 +96,7 @@ public class Tokenizer {
         List<String> tokenSanitized = new ArrayList<>();
         for (int i=0; i<tokens.size();i++){
             String c = tokens.get(i).trim();
-            if (c.length() > 0) tokenSanitized.add( c );
+            if (c.length() > 0 && !c.equals(",") ) tokenSanitized.add( c );
         }
         
         return tokenSanitized;
