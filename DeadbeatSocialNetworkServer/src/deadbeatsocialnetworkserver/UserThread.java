@@ -22,7 +22,7 @@ import net.deadbeat.utility.*;
 //Thread class which is resposible for each client connected to the server
 public class UserThread implements Runnable{
     
-    dataHeader headers;
+    DataHeader headers;
     DBInteractions dataChange = new DBInteractions();
     
     DatagramSocket socket;
@@ -52,7 +52,7 @@ public class UserThread implements Runnable{
         
     }
     
-    public UserThread(dataHeader headers){
+    public UserThread(DataHeader headers){
         this.headers = headers;
     }
     
@@ -109,8 +109,8 @@ public class UserThread implements Runnable{
         try{
             //create return JSON message using string provided by function where error occured
             String error = "{'ERROR': '" + message + "'}";
-            byte[] errorData = error.getBytes();
-            DatagramPacket dgp = new DatagramPacket(errorData, errorData.length, userIP, userPort);
+            byte[] errorData = error.getBytes("UTF-8");
+            DatagramPacket dgp = new DatagramPacket(errorData, error.length(), userIP, userPort);
             socket.send(dgp);
             
             //Thread.stop();

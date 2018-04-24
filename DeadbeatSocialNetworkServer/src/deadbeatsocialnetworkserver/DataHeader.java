@@ -9,7 +9,7 @@ package deadbeatsocialnetworkserver;
  *
  * @author Ethan
  */
-public enum dataHeader {
+public enum DataHeader {
     //column name used by the server for geting the enum HEADER
     
     //function: handles new user creation then passes to logon to log new user on

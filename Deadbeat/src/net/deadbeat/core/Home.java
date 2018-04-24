@@ -13,7 +13,8 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.JFrame;
 import net.deadbeat.ui.CoreBar;
-import static net.deadbeat.core.Controller.cbar;
+
+import static net.deadbeat.core.LayoutAdapter.cbar;
 
 // uses jar
 import net.deadbeat.utility.JSON;
@@ -32,54 +33,27 @@ public class Home extends javax.swing.JFrame {
         TaskController.runOnUiThread(()->{
             initFrames();
         });
-        
-//        JSON job = new JSON();
-//        job.fromString( " {'name':'bob','age':12,'taste':[1,2,3]} " );
-//        Log.Out("JSON test => "," {'name':'bob','age':12,'taste':[1,2,3]} ");
-//        Log.Out("JSON","name", job.get("name"));
-//        Log.Out("JSON","age",job.get("age"));
-//        Log.Out("JSON","taste", ((String[])job.get("taste"))[0]);
-        
-        String iv = " [{'name':'adam','age':22,'songs':[2234,'abba, 2012']},{'name':'bob','age':24,'songs':[1,2,3]}] ";
-        
-        JSON job = new JSON();
-        job.fromString(iv);
-        
-        // USAGE
-        // jobject.<DATA_TYPE>at(INDEX,[optional DATA_TYPE]).<DATA_TYPE>at(NAME or INDEX)
-        
-        // EXAMPLE
-        Log.Out("IN = ",iv);
-        Log.Out("JSON file = ", job.getJSON() );
-        Log.Out("User name = ", job.getJSON().val("name") , job.getJSON().<Integer>val("age"));
-        Log.Out("User name = ", job.getJSON(1).val("name") , job.getJSON(1).<Integer>val("age"));
-        Log.Out("List values =", job.getJSON().<String[]>val("songs")[1] );
-        
-        Log.Out("break");
 
-//        
-//        t.get(0).forEach((tkn) -> {
-//            Log.Out(0,tkn.serialValue + "->" + tkn.type.name());
-//        });
-//        t.get(1).forEach((tkn) -> {
-//            Log.Out(1,tkn.serialValue + "->" + tkn.type.name());
-//        });
-        
     }
     
     private void initFrames(){
         
+        // Add custom layout to control how things are position
         this.setLayout(new RawLayout());
         
+        // Create the main panels
         corepanel = new CorePanel();
         overlaypanel = new CoreOverlayPanel();
+        
+        // add the titlebar so windows can be moved about and closed or resized
         cbar = new CoreBar(corepanel,this);
         
+        // Remove default layout for panels
         corepanel.setLayout( null );
         overlaypanel.setLayout( null );
         cbar.setLayout(null);
         
-        Controller.prepareElements(corepanel, overlaypanel, this, cbar);
+        LayoutAdapter.prepareElements(corepanel, overlaypanel, this, cbar);
         
         setUndecorated(true);
         JFrame.setDefaultLookAndFeelDecorated(false);
@@ -105,7 +79,7 @@ public class Home extends javax.swing.JFrame {
                 overlaypanel.setBounds(sidebarWidth, 0, getWidth() - sidebarWidth , getHeight());
                 corepanel.setBounds(0, 0, getWidth(), getHeight());
                 
-                Controller.reflow();
+                LayoutAdapter.reflow();
             }
             
         });
