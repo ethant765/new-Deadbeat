@@ -41,7 +41,7 @@ public class UserThread implements Runnable{
         //test for active user - if they are set their UserID, otherwise this will be set during their login process
         String table = "members";
         String select = "User_ID";
-        String condition = "IPAddress = " + userIP;
+        String condition = "IPAddress = '" + userIP.toString().substring(1) + "'";
         ResultSet rs = dataChange.GetRecord(select, table, condition);
         
         try{
@@ -353,11 +353,23 @@ public class UserThread implements Runnable{
         int otherUsersID = obj.getJSON().getInt("FRIEND_USER_ID");
         
         String table = "Friends";
-        String cols = "(User_ID, Friend_ID, Status_ID)";
-        String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
-        dataChange.InsertRecord(table, cols, vals);
-        
-        //test to ensure that the 
+        String where = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID;
+        //test to ensure they havn't already been added to the friends table together
+        if(dataChange.GetRecord("*", table, where) != null){ //if it isn't null the two users have been added together on this table before
+            ErrorToUser(false);
+        }
+        else{
+            
+            String cols = "(User_ID, Friend_ID, Status_ID)";
+            String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
+            dataChange.InsertRecord(table, cols, vals);
+
+            //test to ensure that the friend request is sent
+            String select = "*";
+            String whereTest = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID + " AND Status_ID = 'wait'";
+            if(dataChange.GetRecord(select, table, whereTest) == null)//error occured during insert opperation
+                ErrorToUser(false); //ensure user is sent status with error
+        }
     }
     
     
@@ -376,7 +388,12 @@ public class UserThread implements Runnable{
         String table = "Friends";
         String valChange = "Status_ID = '" + newStatus + "'";
         String condition = "User_ID = " + FriendRequestUserID + " AND Friend_ID = " + clientUserID;
-         dataChange.UpdateRecord(table, valChange, condition);
+        dataChange.UpdateRecord(table, valChange, condition);
+        
+        //test that the data has been updated
+        String where = "User_ID = " + clientUserID + " AND Friend_ID = " + FriendRequestUserID + " AND Status_ID = '" + newStatus + "'";
+        if(dataChange.GetRecord("*", table, where) == null)//if null error has occured somewhere in the sql data update
+            ErrorToUser(false);
     }
         
     //adds the users message to the message board for their friends to see
@@ -385,11 +402,24 @@ public class UserThread implements Runnable{
         String title = obj.getJSON().getString("MESSAGE_TITLE");
         String message = obj.getJSON().getString("MESSAGE");
         
-        
         String table = "MessageBoard";
-        String cols = "(User_ID, MessageTitle, Messages)";
-        String vals = "(" + userID + ", '" + title + "', '" + message + "')";
-        dataChange.InsertRecord(table, cols, vals);
+        String TestWhere = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
+        
+        //test to ensure that the currernt user hasn't already got a message with that title
+        //this is as the title & userID are used as a joint PK
+        if(dataChange.GetRecord("*", table, TestWhere) != null){ //if not null then already exists
+            ErrorToUser(false);
+        }
+        else{
+            String cols = "(User_ID, MessageTitle, Messages)";
+            String vals = "(" + userID + ", '" + title + "', '" + message + "')";
+            dataChange.InsertRecord(table, cols, vals);
+
+            //test to ensure that the message has been added
+            //same where can be used as initial test in function
+            if(dataChange.GetRecord("*", table, TestWhere) == null)//should now be a value there so null would mean error
+                ErrorToUser(false);
+        }
     }
     
     //sends client list of all currently online users
@@ -465,5 +495,17 @@ public class UserThread implements Runnable{
                " AND Friends.Status_ID = 'con')";
        
         return dataChange.GetCustomRecord(sqlCmd);
+    }
+    
+    private void removeSong(JSON obj){
+        
+    }
+    
+    private void removeMessage(JSON obj){
+        
+    }
+    
+    private void removeUser(){
+        
     }
 }
