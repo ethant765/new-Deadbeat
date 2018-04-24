@@ -19,6 +19,12 @@ public final class Log {
         System.out.println( FormParts(parts) );
     }
     
+    public static void Reminder(Object... parts){
+        Err("\n", BuildCenterTitle(30, "") );
+        Err("\tREMEMBER: ", FormParts(parts),"\n");
+        Err( BuildGroupFooter(30, "") );
+    }
+    
     public static void Err(Object... parts){
         System.err.println( FormParts(parts) );
     }

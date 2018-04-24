@@ -8,20 +8,22 @@ package net.deadbeat.utility;
 /**
  *
  * @author darylcecile
+ * @param <K> key type (string is default)
+ * @param <V> value type
  */
-public class Pair {
-    public String key;
-    public Object value;
-    public Pair(String k, Object v){
+public class Pair<K,V> {
+    public K key;
+    public V value;
+    public <T> Pair(K k, V v){
         key = k;
         value = v;
     }
     
-    public String getKey(){
-        return key;
+    public K getKey(){
+        return (K)key;
     }
     
-    public Object getValue(){
-        return value;
+    public V getValue(){
+        return (V)value;
     }
 }
