@@ -47,8 +47,8 @@ public class UserThread implements Runnable{
             if(rs != null){
                 clientUsersID = rs.getInt("User_ID");
             }
-        }catch(Exception e){//Log.Throw(e);}
-        }
+        }catch(Exception e){Log.Throw(e);}
+        
         
     }
     
@@ -114,7 +114,7 @@ public class UserThread implements Runnable{
             socket.send(dgp);
             
             //Thread.stop();
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
     
     
@@ -157,7 +157,7 @@ public class UserThread implements Runnable{
                 //call function to send all other required login infromation to the client
                 loginInfoSend(obj);
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
     }
     //get a new unique User_ID for the user
     private int newUserID(){
@@ -171,7 +171,7 @@ public class UserThread implements Runnable{
             while(result.next()){
                 newUserID++;//increment userID for each user
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
         return newUserID += 1;//increment 1 last time for new users ID
     }
     
@@ -189,7 +189,7 @@ public class UserThread implements Runnable{
             //get resultset of userName data from the databse
             String value = "*";
             String table = "Profiles";
-            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " ;//getHash(obj.getJSON().getString("PASSWORD"));
+            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " + Security.hash(obj.getJSON().getString("PASSWORD"));//getHash(obj.getJSON().getString("PASSWORD"));
             ResultSet result = dataChange.GetRecord(value, table, Condition);
        
             //if result isn't null then it must have found a user, and their password has matched
@@ -203,7 +203,7 @@ public class UserThread implements Runnable{
             else{
                 ErrorToUser("No profile found with that username and password combination!");
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
         
     }
     //adds new users IP to the active member sql table
@@ -232,7 +232,6 @@ public class UserThread implements Runnable{
                 sendToUser(updateActiveUsers(obj));
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
-
                 addIP(obj.getJSON().getInt("USER_ID"));
     }
     
@@ -289,7 +288,7 @@ public class UserThread implements Runnable{
             String PSScols = "(USER_ID, SharedSongs_ID)";
             String PPSvals = "(" + userID + ", " + songID + ")";
             dataChange.InsertRecord(PSStable, PSScols, PPSvals);
-        } catch(Exception e){System.err.println(e.getMessage());}
+        } catch(Exception e){Log.Throw(e);}
     }
     //generates a new unique ID for songs being added
     private int songIdGen(){
@@ -303,7 +302,7 @@ public class UserThread implements Runnable{
             while(IDs.next()){
                 newID++;//increment for each item
             }
-        }catch(Exception e){System.err.println(e.getMessage());}
+        }catch(Exception e){Log.Throw(e);}
         return newID += 1; //add 1 to be a higher number than any existing IDs
     }
     
@@ -426,38 +425,4 @@ public class UserThread implements Runnable{
        
         return dataChange.GetCustomRecord(sqlCmd);
     }
-    
-    
-    /* REMOVE BEFORE HANDIN
-    private void testFunction(String testing){
-        String testing2 = null;
-        JSON test = new JSON();
-        
-        testing2 = Tokenizer.getWrappedChars(testing,"[","]");
-        testing2 += "}";
-        
-        System.out.println(testing2);
-        
-        
-        test.fromString(testing2);
-        
-        String name = ((String[])test.get("USERNAME"))[0];
-        
-       //id = (int)test.get("USER_ID");
-        System.out.println(name);
-        //System.out.println(id);
-        
-    }*/
-        
-    //used to split recieved strings into their indervidual tokens
-    /*private String[] SplitString(String passedString){
-        StringTokenizer tokens = new StringTokenizer(passedString, ",");
-        int numOfTokens = tokens.countTokens();
-        String holder[] = new String[numOfTokens];
-        
-        for(int i = 0; i < numOfTokens; i++){
-            holder[i] = tokens.nextToken().trim();
-        }
-        return holder;
-    }*/
 }
