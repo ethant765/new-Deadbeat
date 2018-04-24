@@ -171,6 +171,23 @@ public class UserThread implements Runnable{
                 //send the user all their account information
                 sendToUser(result);
                 
+                //call function which handles sending remaining login info
+                loginInfoSend(obj);
+            }
+        }catch(Exception e){System.err.println(e.getMessage());}
+        
+    }
+    //adds new users IP to the active member sql table
+    private void addIP(int ID){
+        String insertInto = "Members";
+        String cols = "(IPAddress, User_ID)";
+        String vals = "(" + userIP + ", " + ID + ")";
+        dataChange.InsertRecord(insertInto, cols, vals);
+    }
+    
+    //when a new user creates an accout or an exisint user signs in, this is info relayed back to client
+    private void loginInfoSend(JSON obj){
+                        
                 //send a list of their friends to the user
                 sendToUser(FriendsList(obj));
                 
@@ -184,8 +201,6 @@ public class UserThread implements Runnable{
                 sendToUser(updateActiveUsers(obj));
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
-                addIP(ID);
-        String vals = "(" + userIP + ", " + ID + ")";
 
                 addIP(obj.getJSON().getInt("USER_ID"));
     }
@@ -384,7 +399,6 @@ public class UserThread implements Runnable{
                "WHERE Friends.Friend_ID <> " + userID +
                " AND Friends.Status_ID = 'con')";
        
-
         return dataChange.GetCustomRecord(sqlCmd);
     }
     
