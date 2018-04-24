@@ -88,6 +88,7 @@ public class UserThread implements Runnable{
             else if(String.valueOf(headers.REMOVE_MESSAGE).equals(header)) removeMessage(recievedObject);
             else if(String.valueOf(headers.REMOVE_SONG).equals(header)) removeSong(recievedObject);
             else if(String.valueOf(headers.REMOVE_USER).equals(header)) removeUser();
+            else if(String.valueOf(headers.ADD_MUSIC_PREFERENCES).equals(header)) addMusicPreferences(recievedObject);
             else{//handle error of incorrect or no header infromation in recieved string
                 ErrorToUser(false);//false returns error to client
             }
@@ -531,10 +532,29 @@ public class UserThread implements Runnable{
         int userID = clientUsersID;
         String title = obj.get(0).get("MESSAGE_TITLE").get();
         
+        //test to ensure there is a message with the current title by that user
+        String tableName = "MessageBoard";
+        String where = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
+        if(dataChange.GetRecord("*", tableName, where) == null) //if there is no result then message doesn't exist
+            ErrorToUser(false);
+        else{
+            dataChange.DeleteRecord(tableName, where);//delete table
+            
+            //test to ensure deletion successful
+            if(dataChange.GetRecord("*", tableName, where) != null) //if deleted should be no result
+                ErrorToUser(false);
+        }
     }
     
     //removes/deletes the user account
     private void removeUser(){
+        int userID = clientUsersID;
         
+        
+    }
+    
+    //adds the users music preferences to their account
+    private void addMusicPreferences(JSONAdapter obj){
+        String preferenceID = obj.get(0).get("MUSIC_TYPE_ID").get();
     }
 }

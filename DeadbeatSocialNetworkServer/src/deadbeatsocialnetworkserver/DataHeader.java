@@ -101,5 +101,10 @@ public enum DataHeader {
     //function: removes the users profile - delete account
     //Data Needed: N/A
     //Data returned: N/A
-    REMOVE_USER;
+    REMOVE_USER,
+    
+    //function: sets the users music profile preferences
+    //data Needed: MUSIC_TYPE_ID
+    //Data returned: N/A
+    ADD_MUSIC_PREFERENCES;
 }
