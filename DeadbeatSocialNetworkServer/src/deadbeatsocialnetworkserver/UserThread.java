@@ -5,6 +5,7 @@
  */
 package deadbeatsocialnetworkserver;
 
+import net.deadbeat.utility.*;
 import java.net.*;
 import java.sql.ResultSet;
 import java.util.*;
@@ -45,62 +46,51 @@ public class UserThread implements Runnable{
         //get the data sent from the user on their connection to the server
         byte[] data = new byte[1024];
         data = packet.getData();
-        String Message = '[' + new String(data)+']';
+        String Message = '[' + new String(data)+']'; //add square brackets to help compatability with JSON class
 
         JSON stringObject = new JSON();
-        stringObject.fromString(Message);
-        String header = stringObject.getJSON().<String>val("enum");
+        stringObject.fromString(Message);//create a jsonObject from the string sent by the client
+        String header = stringObject.getJSON().getString("HEADER"); //retrieve the header from the string
         
+        //used header infromation to direct the client to the function it requires
         if(String.valueOf(headers.LOGIN_NEW_USER).equals(header)) newUser(stringObject);
-        else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(header)) returningUser(stringObject); //int clients User_ID
+        else if(String.valueOf(headers.LOGIN_EXISTING_USER).equals(header)) returningUser(stringObject); 
         else if(String.valueOf(headers.LOG_OFF).equals(header)) logOff();
         else if(String.valueOf(headers.SHARE_SONG).equals(header)) shareSong(stringObject);
-        else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(header)) sendToUser(updateActiveUsers(stringObject)); //int clients user_ID
-        else if(String.valueOf(headers.SHARED_SONGS_LIST).equals(header)) sendToUser(SharedSongsList(stringObject)); //int user_ID (could be user or friends ID)
-        else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(header)) sendToUser(similarProfiles(stringObject)); //int clients user_ID
+        else if(String.valueOf(headers.UPDATE_ACTIVE_USERS).equals(header)) sendToUser(updateActiveUsers(stringObject)); 
+        else if(String.valueOf(headers.SHARED_SONGS_LIST).equals(header)) sendToUser(SharedSongsList(stringObject));
+        else if(String.valueOf(headers.RECIEVE_SIMILAR_PROFILES).equals(header)) sendToUser(similarProfiles(stringObject)); 
         else if(String.valueOf(headers.UPDATE_MESSAGE_BOARD).equals(header)) sendToUser(updateMessageBoard());
-        else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(header)) addToMessageBoard(stringObject); //userID, messageTitle, Message
-        else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(header)) sendToUser(updateFriendRequests(stringObject)); //int clients user_ID
-        else if(String.valueOf(headers.FRIENDS_LIST).equals(header)) sendToUser(FriendsList(stringObject)); //int clients user_ID
-        else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(stringObject); // clients userID and user ID for user recieveing friend request
-        else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(stringObject); //clientID, ID for user who sent clinet request, boolean friend request accepted/rejected
-        else{
-            //error
+        else if(String.valueOf(headers.ADD_TO_MESSAGE_BOARD).equals(header)) addToMessageBoard(stringObject); 
+        else if(String.valueOf(headers.UPDATE_FRIEND_REQUESTS).equals(header)) sendToUser(updateFriendRequests(stringObject)); 
+        else if(String.valueOf(headers.FRIENDS_LIST).equals(header)) sendToUser(FriendsList(stringObject)); 
+        else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(stringObject); 
+        else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(stringObject); 
+        else{//handle error of incorrect or no header infromation in recieved string
+            try{
+                String error = "No header, or incorrect header information";
+                byte[] errorData = error.getBytes();
+                DatagramPacket dgp = new DatagramPacket(errorData, errorData.length, userIP, userPort);
+                socket.send(dgp);
+            }catch(Exception e){System.err.println(e.getMessage());}
         }
     }    
 
     //function used to return data to the client
     private void sendToUser(ResultSet sendData){
         try{
-            //JSON jobject = new JSON();
-            
-            //use function which converts database resultset to JSON
-            //jobject.fromResultSet(sendData); //fromResultSet function not working
-            
-            //convert JSONArray to strng
-            //String message = jobject.toString();
-            
-           
-            
-             /* test = new resultSetToJson();
-             JSONArray jArray = new JSONArray();
-             jArray = test.convertToJSON(sendData);
-             String message = jArray.toString();*/
-             
-             
-            
-            //convert string to bytes ready to send to client
-            /*byte[] data = message.getBytes();
-            DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
-            socket.send(sendPacket);*/
-            
-            //testFunction(message);
-            
-            
-            
+            //create a json object string from the resultSet passed to this function
             JSON jsonString = new JSON();
             jsonString.fromResultSet(sendData);
-            Log.Out(jsonString.getString("USERNAME"));
+            //Log.Out(jsonString.getString("USERNAME"));
+            
+            //convert json object to string then string to bytes ready to send to client
+            String message = jsonString.toString();
+            
+            //send message back to the client
+            byte[] data = message.getBytes();
+            DatagramPacket sendPacket = new DatagramPacket(data, data.length, userIP, userPort);
+            socket.send(sendPacket);
             
         }catch(Exception e){Log.Throw(e);}
     }
@@ -114,29 +104,71 @@ public class UserThread implements Runnable{
     //recieves the data from the client for new user
     //and stores data in the database
     private void newUser(JSON obj){
-        String tableName = "Profiles";
-        String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage)";
-        //String Values = "('" + userID + "', '" + loginData[2] + "', '" + loginData[3] + "', '" + loginData[4] + "', " + loginData[5] + ")";
-       
+        
+        try{
+            //get data for the new user from the recieved json string object
+            int id = newUserID();
+            String userName = obj.getJSON().getString("USERNAME");
+            String PlaceOfBirth = obj.getJSON().getString("PLACE_OF_BIRTH");
+            Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("DOB"));
+            Object imageFile = BinResource.lookup(obj.getJSON().getString("PROFILE_IMAGE")); 
+            String Password = obj.getJSON().getString("PASSWORD");
+            
+            //insert the data into the database for the user
+            String tableName = "Profiles";
+            String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage, Password)";
+            String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', " + imageFile + ", '" + Password + "')";
+            dataChange.InsertRecord(tableName, tableCols, Values);
+            
+            //get user id in result set to send back to client
+            String ReturnID = "User_ID";
+            //use same table as insert operation above
+            String condition = "UserName = " + userName;
+            sendToUser(dataChange.GetRecord(ReturnID, tableName, condition));//send users new ID back to client
+            
+            //call function to send all other required login infromation to the client
+            loginInfoSend(obj);
+            
+        }catch(Exception e){System.err.println(e.getMessage());}
     }
-    
+    //get a new unique User_ID for the user
+    private int newUserID(){
+        //retrieve all the userIDs already in use
+        String select = "User_ID";
+        String from = "Profiles";
+        ResultSet result = dataChange.GetRecord(select, from, null);
+        
+        int newUserID = 0;
+        try{
+            while(result.next()){
+                newUserID++;//increment userID for each user
+            }
+        }catch(Exception e){System.err.println(e.getMessage());}
+        return newUserID += 1;//increment 1 last time for new users ID
+    }
     
      //recieves the data from the client for returning user
     //checks user credentials
    //adds IPaddress to active users table in DB
     private void returningUser(JSON obj){
-        int ID = 0;
-        
-        //get resultset of userName data from the databse
-        String value = "*";
-        String table = "Profiles";
-        String Condition = "User_ID = " + ID ;
-        ResultSet result = dataChange.GetRecord(value, table, Condition);
-        
-        try{
-            //if result isn't null then it must have found a user, therefor login is correct
+         try{
+            String IDval = "User_ID";
+            String IDtable = "Profiles";
+            String IDcondition = "UserName = '" + obj.getJSON().getString("USERNAME") + "'";
+            ResultSet idResult = dataChange.GetRecord(IDval, IDtable, IDcondition);
+            int ID = idResult.getInt("User_ID");
+
+            //get resultset of userName data from the databse
+            String value = "*";
+            String table = "Profiles";
+            
+            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " + "";//getHash(obj.getJSON().getString("PASSWORD"));
+            
+            ResultSet result = dataChange.GetRecord(value, table, Condition);
+       
+            //if result isn't null then it must have found a user, and their password has matched
             if(result != null){
-                //send the user all their requried information
+                //send the user all their account information
                 sendToUser(result);
                 
                 //send a list of their friends to the user
@@ -153,16 +185,9 @@ public class UserThread implements Runnable{
                 
                 //add the user to the members table - Stores their IP and logs them as an active user
                 addIP(ID);
-            }
-        }catch(Exception e){Log.Throw(e);}
-        
-    }
-    //adds new users IP to the active member sql table
-    private void addIP(int ID){
-        String insertInto = "Members";
-        String cols = "(IPAddress, User_ID)";
         String vals = "(" + userIP + ", " + ID + ")";
-        dataChange.InsertRecord(insertInto, cols, vals);
+
+                addIP(obj.getJSON().getInt("USER_ID"));
     }
     
     //should remove users IPaddress and info from active users table (Members table)
@@ -359,17 +384,8 @@ public class UserThread implements Runnable{
                "WHERE Friends.Friend_ID <> " + userID +
                " AND Friends.Status_ID = 'con')";
        
-       
-       ResultSet results = dataChange.GetCustomRecord(sqlCmd);
-       /*try{
-           while(results.next()){
-               String stringHolder = results.getString("USERNAME");
-               int idHolder = results.getInt("USER_ID");
-               System.out.println(stringHolder + ",    " + idHolder);
-           }
-       }catch(Exception e){}*/
 
-        return results;
+        return dataChange.GetCustomRecord(sqlCmd);
     }
     
     
