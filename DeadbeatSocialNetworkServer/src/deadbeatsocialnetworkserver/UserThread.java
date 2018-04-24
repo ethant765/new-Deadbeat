@@ -262,38 +262,12 @@ public class UserThread implements Runnable{
     //should remove users IPaddress and info from active users table (Members table)
     //removes any messages the user has put on the message board while
     private void logOff(){
-        //call function to clear users message board messages
-        //uses IPadress so needs calling before clearing users IP from active members table
+        //call function to clear users message board messages as they log off
         removeUserMessageBoardMessages();
         
-        //members table is the table which stores active members
-        String tableToEdit = "Members";
-        // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
-        String conditionForEdit = "IPAddress = " + userIP;
-        
-        dataChange.DeleteRecord(tableToEdit, conditionForEdit);
-        
-        //test to ensure that the user has been taken off the active members table correctly
-        if(dataChange.GetRecord("*", tableToEdit, conditionForEdit) != null)//if not null then error removing user has occured
-            ErrorToUser(false);
+        //call function to remove user from active members table
+        removeUserMembersTable();
     }
-    //when user logs off removes any messages which they put on the message board
-    private void removeUserMessageBoardMessages(){
-        try{
-            //use users ID to remove any messages they have posted on the message board
-            String removeTable = "MessageBoard";
-            String removeCondition = "User_ID = " + clientUsersID;
-            dataChange.DeleteRecord(removeTable, removeCondition);
-            
-            //test to ensure that the users message board items have been removed
-            String select = "*";
-            String where = "User_ID = " + clientUsersID;
-            if(dataChange.GetRecord(select, removeTable, where) != null) //if it doesn't equal null then row deletion hasn't worked correctly
-                ErrorToUser(false);
-        }catch(Exception e){Log.Throw(e);}
-    }
-    
-    
     
     
     
@@ -546,15 +520,162 @@ public class UserThread implements Runnable{
         }
     }
     
-    //removes/deletes the user account
+        //adds the users music preferences to their account
+    private void addMusicPreferences(JSONAdapter obj){
+        String preferenceID = obj.get(0).get("MUSIC_TYPE_ID").get();
+        int id = clientUsersID;
+        
+        //the music preferences are already in the MusicTypes table and are static so that doesn't need changing
+        //so link the users music types with their ID in the profileMusicPreference table
+        
+        //test to ensure the user hasn't already got that specific music preference
+        String table = "ProfileMusicPreferences";
+        String where = "User_ID = " + id + " AND MusicType_ID = '" + preferenceID + "'";
+        if(dataChange.GetRecord("*", table, where) != null) //error as user already has this music preference set
+            ErrorToUser(false);
+        else{        
+            //no error yet so proceed with inserting data
+            String insertCols = "(User_ID, MusicType_ID)";
+            String insertVals = "(" + id + ", '" + preferenceID + "')";
+            
+            dataChange.InsertRecord(table, insertCols, insertVals);
+            
+            //now data should have been inserted, test to ensure it has been
+            if(dataChange.GetRecord("*", table, where) == null) //should now be a record there so error if null
+                ErrorToUser(false);
+        }
+    }
+    
+    
+    //removes/deletes the user account - removing all their data with them
     private void removeUser(){
         int userID = clientUsersID;
         
+        //user needs removing from 'Friends', 'ProfileSharedSongs', 'SharedSongs', 'ProfileMusicPreferences', 'MessageBoard', 'Members' and 'Profiles' tables.
+        removeUserFriendsTable();
+        removeUserSongs();
+        removeUserProfileMusicPreferencesTable();
+        removeUserMessageBoardMessages();
+        removeUserMembersTable();
+        removeUserProfileTable();
         
+        //test to ensure removal should have occured in each indervidual function
     }
     
-    //adds the users music preferences to their account
-    private void addMusicPreferences(JSONAdapter obj){
-        String preferenceID = obj.get(0).get("MUSIC_TYPE_ID").get();
+    //removes the user from the ProfileSharedSongs and the SharedSongs tables
+    private void removeUserSongs(){
+        int id = clientUsersID;
+        
+        String profileTable = "ProfileSharedSongs";
+        String songsTable = "SharedSongs";
+        
+        //get a list of all the users shared songs and remove them from the songs table
+        //this will also check that the user has shared songs
+        String conditionUserID = "USER_ID = " + id;
+        ResultSet songs = dataChange.GetRecord("SharedSong_ID", profileTable, conditionUserID);
+        try{
+            while(songs.next()){
+                String songID = songs.getString("SharedSong_ID");
+                
+                //use retrieved song ids to remove data from the SharedSongs table
+                String conditionSong = "SharedSongs_ID = " + songID;
+                dataChange.DeleteRecord(songsTable, conditionSong);
+                
+                //test to ensure the deletion
+                if(dataChange.GetRecord("*", songsTable, conditionSong) != null)
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
+        
+        //once all data is remove from SharedSongs clear profileSharedSongs
+        dataChange.DeleteRecord(profileTable, conditionUserID);
+        
+        //test to ensure the user is no long in the table
+        if(dataChange.GetRecord("*", profileTable, conditionUserID) != null)
+            ErrorToUser(false);
+    }
+    
+    //removes the user from the Profile table - account removal
+    private void removeUserProfileTable(){
+        int id = clientUsersID;
+        
+        String table = "Profiles";
+        String condition = "User_ID = " + id;
+        
+        dataChange.DeleteRecord(table, condition);
+        
+        //test for removal
+        if(dataChange.GetRecord("*", table, condition) != null)
+            ErrorToUser(false);
+    }
+    
+    //removes the user from the Friends table - account deletion
+    private void removeUserFriendsTable(){
+        int id = clientUsersID;
+        
+        String table = "Friends";
+        String condition = "User_ID = " + id + " OR Friend_ID = " + id;
+        
+        //test to ensure the user has friends before removing
+        if(dataChange.GetRecord("*", table, condition) != null){ 
+            //if not null remove
+            dataChange.DeleteRecord(table, condition);
+            
+            //test to ensure the deletion has worked correctly
+            if(dataChange.GetRecord("*", table, condition) != null)//shouldnt be anything anymore
+                ErrorToUser(false);
+        }
+    }
+    
+    //remove users profile music preferences - account removal
+    private void removeUserProfileMusicPreferencesTable(){
+        int id = clientUsersID;
+        
+        String table = "ProfileMusicPreferences";
+        String condition = "User_ID = " + id;
+        //test for user music preferences
+        if(dataChange.GetRecord("*", table, condition) != null){
+            //remove the user from table
+            dataChange.DeleteRecord(table, condition);
+            
+            //test to ensure removal
+            if(dataChange.GetRecord("*", table, condition) != null)//if still not null then an error has occured
+                ErrorToUser(false);
+        }
+    }
+
+    //remove the user for the members table - log off or account removal
+    private void removeUserMembersTable(){
+        
+        //members table is the table which stores active members
+        String tableToEdit = "Members";
+        // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
+        String conditionForEdit = "IPAddress = " + userIP;
+        
+        dataChange.DeleteRecord(tableToEdit, conditionForEdit);
+        
+        //test to ensure that the user has been taken off the active members table correctly
+        if(dataChange.GetRecord("*", tableToEdit, conditionForEdit) != null)//if not null then error removing user has occured
+            ErrorToUser(false);
+    }
+    
+    //when user logs off/deletes account removes any messages which they put on the message board
+    private void removeUserMessageBoardMessages(){
+        try{
+            String removeTable = "MessageBoard";
+            String removeCondition = "User_ID = " + clientUsersID;
+            
+            //before trying to remove ensure the user has messages on the message board
+            if(dataChange.GetRecord("*", removeTable, removeCondition) != null) {//if not null user has messages
+                //use users ID to remove any messages they have posted on the message board
+                dataChange.DeleteRecord(removeTable, removeCondition);
+
+                //test to ensure that the users message board items have been removed
+                String select = "*";
+                String where = "User_ID = " + clientUsersID;
+                if(dataChange.GetRecord(select, removeTable, where) != null) //if it doesn't equal null then row deletion hasn't worked correctly
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
 }
