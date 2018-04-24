@@ -37,7 +37,7 @@ public abstract class Component extends JComponent{
         events.add( new Pair(eventName,handler) );
     }
     
-    public void Create(){
+    public final void Create(){
         // All events have been added, process
         
         for (Pair<EName,Task> event : events){
@@ -71,13 +71,18 @@ public abstract class Component extends JComponent{
         
     }
     
+    public final void setPosition(int x, int y){
+        this.x = x;
+        this.y = y;
+    }
+    
     @Override
     public Dimension getPreferredSize() {
         // return super.getPreferredSize(); //To change body of generated methods, choose Tools | Templates.
         return new Dimension(this.Width,this.Height);
     }
     
-    public void setDimension(int w, int h){
+    public final void setDimension(int w, int h){
         this.Height = h;
         this.Width = w;
         
@@ -89,7 +94,7 @@ public abstract class Component extends JComponent{
         // TODO finish reflow
         Log.Reminder("Finish off reflow");
         
-        paintAll(  );
+        paintAll( getGraphics() );
     }
     
     @Override
@@ -101,9 +106,17 @@ public abstract class Component extends JComponent{
     
     /**
      * Executed by Component when ready to work with UI
+     * <p>
      * This Method executes on the UI thread
      */
     public abstract void whenReady();
+    
+    /**
+     * Executed by Component when layout initialisation is complete
+     * <p>
+     * Use This method to set events
+     */
+    public abstract void whenStarted();
     
     public abstract void whenPainting(Graphics g);
 }
