@@ -85,6 +85,9 @@ public class UserThread implements Runnable{
             else if(String.valueOf(headers.FRIENDS_LIST).equals(header)) returnObject.fromResultSet(FriendsList()); 
             else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(recievedObject); 
             else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(recievedObject); 
+            else if(String.valueOf(headers.REMOVE_MESSAGE).equals(header)) removeMessage(recievedObject);
+            else if(String.valueOf(headers.REMOVE_SONG).equals(header)) removeSong(recievedObject);
+            else if(String.valueOf(headers.REMOVE_USER).equals(header)) removeUser();
             else{//handle error of incorrect or no header infromation in recieved string
                 ErrorToUser(false);//false returns error to client
             }
@@ -497,14 +500,39 @@ public class UserThread implements Runnable{
         return dataChange.GetCustomRecord(sqlCmd);
     }
     
+    //removes the specified song from the server for the client
     private void removeSong(JSON obj){
+        int songID = obj.getJSON().getInt("SONG_ID");
         
+        //test to ensure that there is a song with that ID first
+        String songTable = "SharedSongs";
+        String whereTest = "SharedSongs_ID = " + songID;
+        if(dataChange.GetRecord("*", songTable, whereTest) == null){ //if no song to begin with there has been an error somewhere
+            ErrorToUser(false);
+        }
+        else{
+            //remove song form song table, and profileSongTable
+            String ProfileSongTable = "ProfileSharedSongs";
+            String whereProfileSong = "SharedSong_ID = " + songID;
+            dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
+            String whereSong = "SharedSongs_ID = " + songID;
+            dataChange.DeleteRecord(songTable, whereSong);
+            
+            //test that the database deletes have performed correctly
+            ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
+            ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
+            
+            if(songResult != null || profileSongResult != null)//if either return data there has been a deleting error
+                ErrorToUser(false);
+        }
     }
     
+    //removes the specified message from the message board for the client
     private void removeMessage(JSON obj){
         
     }
     
+    //removes/deletes the user account
     private void removeUser(){
         
     }
