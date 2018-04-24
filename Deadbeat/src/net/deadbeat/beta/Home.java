@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.deadbeat.core;
+package net.deadbeat.beta;
 
 import net.deadbeat.layout.RawLayout;
 import net.deadbeat.ui.CoreOverlayPanel;
@@ -12,12 +12,14 @@ import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import javax.swing.JFrame;
+import net.deadbeat.core.LayoutAdapter;
 import net.deadbeat.ui.CoreBar;
 
 import static net.deadbeat.core.LayoutAdapter.cbar;
+import net.deadbeat.core.TaskController;
 
 // uses jar
-import net.deadbeat.utility.JSONAdapter;
+import net.deadbeat.utility.JSON;
 import net.deadbeat.utility.Log;
 
 /**
@@ -46,8 +48,7 @@ public class Home extends javax.swing.JFrame {
         corepanel = new CorePanel();
         overlaypanel = new CoreOverlayPanel();
         
-        // add the titlebar so windows can be moved about and closed or resized
-        cbar = new CoreBar(corepanel,this);
+        
         
         // Remove default layout for panels
         corepanel.setLayout( null );
@@ -157,6 +158,4 @@ public class Home extends javax.swing.JFrame {
     // Variables declaration - do not modify                     
     // End of variables declaration                   
     
-    protected CorePanel corepanel;
-    protected CoreOverlayPanel overlaypanel;
 }

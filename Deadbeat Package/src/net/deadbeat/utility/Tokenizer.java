@@ -29,20 +29,21 @@ public class Tokenizer {
         NULL,
         COLON,
         COMMA,
-        KEY_VALUE;
+        KEY_VALUE,
+        UNDEFINED;
     }
     private static final char SINGLE_QUOTE = '\'';
     private static final char DOUBLE_QUOTE = '"';
     
-    public static List<List<Token>> Tokenize(String input){
-        List<Token> tokens = new ArrayList<>();
+    public static List<String> Tokenize(String input){
+        List<String> tokens = new ArrayList<>();
         TokenType stringOpen = null;
         String current = "";
         
         //clean up parameter before using
         input = input.trim();
-        if ( input.charAt(0) == '{' ) tokens.add(new Token("{"));
-        if ( input.charAt(0) == '[' ) tokens.add(new Token("["));
+        if ( input.charAt(0) == '{' ) tokens.add( ("{") );
+        if ( input.charAt(0) == '[' ) tokens.add( ("[") );
         
         String scannedString = input.substring(1, input.length()-1);
         
@@ -53,79 +54,51 @@ public class Tokenizer {
             
             if ( Tokenizer.isQuote(c) && stringOpen == Tokenizer.quoteVal(c) ){
                 stringOpen = null;
-                tokens.add(new Token(current));
+                tokens.add((current));
                 current = "";
             }
             else if ( isQuote(c) && stringOpen == null ){
                 stringOpen = quoteVal(c);
             }
             else if ( c == ':' && stringOpen == null ){
-                if ( !"".equals(current) ) tokens.add(new Token(current));
-                tokens.add(new Token(""+c));
+                if ( !"".equals(current) ) tokens.add((current));
+                tokens.add((""+c));
                 current = "";
             }
             else if ( c == ',' && stringOpen == null ){
                 if ( !"".equals(current) ) {
                     if ( !current.endsWith(""+c) ){
-                        tokens.add(new Token(current));
+                        tokens.add((current));
                     }
                     else{
-                        tokens.add(new Token(current.substring(0, current.length()-1)));
+                        tokens.add((current.substring(0, current.length()-1)));
                     }
                 }                
-                if ( !(""+c).equals(current) ) tokens.add(new Token(""+c));
+                if ( !(""+c).equals(current) ) tokens.add((""+c));
                 current = "";
             }
             else if ( c == '{' || c == '[' ){
                 current = "";
                 Pair<String,Integer> enclosedContent = Tokenizer.getEnclosedContent(scannedString, c, i);
-                tokens.add( new Token( enclosedContent.getKey() ) );
+                tokens.add(( enclosedContent.getKey() ) );
                 i = enclosedContent.getValue();
             }
             
             
         }
         
-        if ( !"".equals(current) ) tokens.add(new Token(current));
+        if ( !"".equals(current) ) tokens.add((current));
         
-        if ( input.charAt(0) == '{' ) tokens.add(new Token("}"));
-        if ( input.charAt(0) == '[' ) tokens.add(new Token("]"));
+        if ( input.charAt(0) == '{' ) tokens.add(("}"));
+        if ( input.charAt(0) == '[' ) tokens.add(("]"));
         
-        List<Token> tokenCopy = new ArrayList<>();
-        for (int i = 1 ; i < tokens.size() ; i++){
-            if ( tokens.get(i).type !=  tokens.get(i-1).type ){
-                tokenCopy.add(tokens.get(i));
-            }
-        }
-        tokens.clear();
-        tokens.addAll(tokenCopy);
-        
-       
-        // clean up tokens
-        List<List<Token>> tokenList = new ArrayList<List<Token>>();
-        
-        // remove square brackets for lists
-        tokenList.add( new ArrayList<Token>() );
-        
-        for (int ti = 0 ; ti < tokens.size(); ti++){
-            if ( tokens.get(ti).type == TokenType.COLON ){
-                tokenList.get(tokenList.size()-1).add(new Token( tokens.get(ti-1).serialValue , tokens.get(ti+1).serialValue ));
-                ti = ti+1;
-            }
-            else if ( tokens.get(ti).type == TokenType.JSON ){
-                if ( tokenList.get(tokenList.size()-1).size() > 0 ){
-                    tokenList.add( new ArrayList<Token>() );
-                }
-                tokenList.get(tokenList.size()-1).add(tokens.get(ti));
-            }
+        List<String> tokenSanitized = new ArrayList<>();
+        for (int i=0; i<tokens.size();i++){
+            String c = tokens.get(i).trim();
+            if (c.length() > 0) tokenSanitized.add( c );
         }
         
-        //remove empty entries
-        List<List<Token>> fTokenList = new ArrayList<List<Token>>();
-        for (List<Token> toke : tokenList){
-            if ( toke.size() > 0 ) fTokenList.add(toke);
-        }
-        return fTokenList;
+        return tokenSanitized;
     }
     
     private static Pair<String,Integer> getEnclosedContent(String input,char openingChar,int startPos){
