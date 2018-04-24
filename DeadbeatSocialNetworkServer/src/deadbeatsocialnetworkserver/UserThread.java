@@ -422,7 +422,7 @@ public class UserThread implements Runnable{
         return dataChange.GetRecord(select, from, where);
     }
     
-    //sends the client a list of all other profiles with similar music preferences
+
     private ResultSet similarProfiles(){
         int userID = clientUsersID;
         
