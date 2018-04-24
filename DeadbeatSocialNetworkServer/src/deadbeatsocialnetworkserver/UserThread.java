@@ -61,14 +61,14 @@ public class UserThread implements Runnable{
         //get the data sent from the user on their connection to the server
         byte[] data = new byte[1024];
         data = packet.getData();
-        String Message = '[' + new String(data)+']'; //add square brackets to help compatability with JSON class
+        String Message = new String(data); //add square brackets to help compatability with JSON class
 
-        JSON recievedObject = new JSON();
+        JSONAdapter recievedObject = new JSONAdapter();
         recievedObject.fromString(Message);//create a jsonObject from the string sent by the client
-        String header = recievedObject.getJSON().getString("HEADER"); //retrieve the header from the string
-        
+        String header = recievedObject.get(0).get("HEADER").get();
+                
         //create the JSONobject which will be used to return data
-        JSON returnObject = new JSON();
+        JSONAdapter returnObject = new JSONAdapter();
         
         try{
             //used header infromation to direct the client to the function it requires
@@ -98,12 +98,11 @@ public class UserThread implements Runnable{
     }
 
     //function used to return data to the client
-    private void sendToUser(JSON sendData){
+    private void sendToUser(JSONAdapter sendData){
         try{
             
             //add status header onto the json string to send to client
-            sendData.getJSON().set("STATUS", opSuccsess);
-            
+            sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccsess), Tokenizer.TokenType.BOOLEAN ) );
             //convert json object to string then string to bytes ready to send to client
             String message = sendData.toString();
             
@@ -128,23 +127,23 @@ public class UserThread implements Runnable{
     
     //recieves the data from the client for new user
     //and stores data in the database
-    private void newUser(JSON obj){
+    private void newUser(JSONAdapter obj){
         
         try{
             String ErrorTable = "Profiles";
             String ErrorSelect = "*";
-            String ErrorWhere = "UserName = '" + obj.getJSON().getString("USERNAME") + "'";
+            String ErrorWhere = "UserName = '" + obj.get(0).get("USERNAME").get() + "'";
             if(dataChange.GetRecord(ErrorSelect, ErrorTable, ErrorWhere) != null){//test to see if username surplied has been taken
                 ErrorToUser(false);
             }
             else{
                 //get data for the new user from the recieved json string object
                 int id = newUserID();
-                String userName = obj.getJSON().getString("USERNAME");
-                String PlaceOfBirth = obj.getJSON().getString("PLACE_OF_BIRTH");
-                Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("DOB"));
-                Object imageFile = BinResource.lookup(obj.getJSON().getString("PROFILE_IMAGE")); 
-                String Password = obj.getJSON().getString("PASSWORD");
+                String userName = obj.get(0).get("USERNAME").get();
+                String PlaceOfBirth = obj.get(0).get("PLACE_OF_BIRTH").get();
+                Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.get(0).get("DOB").get());
+                Object imageFile = BinResource.lookup(obj.get(0).get("PROFILE_IMAGE").get()); 
+                String Password = obj.get(0).get("PASSWORD").get();
 
                 //insert the data into the database for the user
                 String tableName = "Profiles";
@@ -182,18 +181,18 @@ public class UserThread implements Runnable{
      //recieves the data from the client for returning user
     //checks user credentials
    //adds IPaddress to active users table in DB
-    private void returningUser(JSON obj){
+    private void returningUser(JSONAdapter obj){
          try{
             String IDval = "User_ID";
             String IDtable = "Profiles";
-            String IDcondition = "UserName = '" + obj.getJSON().getString("USERNAME") + "'";
+            String IDcondition = "UserName = '" + obj.get(0).get("USERNAME").get() + "'";
             ResultSet idResult = dataChange.GetRecord(IDval, IDtable, IDcondition);
             int ID = idResult.getInt("User_ID");
 
             //get resultset of userName data from the databse
             String value = "*";
             String table = "Profiles";
-            String Condition = "UserName = " + obj.getJSON().getString("USERNAME") + "' AND Password = " + Security.hash(obj.getJSON().getString("PASSWORD"));//getHash(obj.getJSON().getString("PASSWORD"));
+            String Condition = "UserName = " + obj.get(0).get("USERNAME").get() + "' AND Password = " + Security.hash(obj.get(0).get("PASSWORD").get());//getHash(obj.getJSON().getString("PASSWORD"));
             ResultSet result = dataChange.GetRecord(value, table, Condition);
        
             //if result isn't null then it must have found a user, and their password has matched
@@ -225,10 +224,10 @@ public class UserThread implements Runnable{
     }
     
     //when a new user creates an accout or an exisint user signs in, this is info relayed back to client
-    private void loginInfoSend(JSON obj, ResultSet userData){
+    private void loginInfoSend(JSONAdapter obj, ResultSet userData){
         try{
             //create a JSON object to store all the required information
-            JSON returnData = new JSON();
+            JSONAdapter returnData = new JSONAdapter();
             
             //create a result set list to use when creating a json string of it
             List<ResultSet> resultsHolder = new ArrayList<>();
@@ -249,7 +248,7 @@ public class UserThread implements Runnable{
             resultsHolder.add(updateActiveUsers());
             
             //add the users IP address to the active members table
-            addIP(obj.getJSON().getInt("USER_ID"));
+            addIP(obj.get(0).get("USER_ID").get());
             
             //turn all the resultSet list data into a JSON string ready to be sent
             returnData.fromMergedResultSets(resultsHolder);
@@ -300,16 +299,16 @@ public class UserThread implements Runnable{
     
     //-------------------------------------------enum functions-----------------------------------------------------
     //allows the client to share a song
-    private void shareSong(JSON obj){        
+    private void shareSong(JSONAdapter obj){        
         try{
             //get data out of JSON string object
             int userID = clientUsersID;
             int songID = songIdGen();
-            String songName = obj.getJSON().getString("SONG_NAME");
-            String Artist = obj.getJSON().getString("ARTIS");
-            Date ReleaseDate = new SimpleDateFormat("yyyy/MM/dd").parse(obj.getJSON().getString("RELEASE_DATE"));
-            String Album = obj.getJSON().getString("ALBUM");
-            Object songFile = BinResource.lookup(obj.getJSON().getString("SONG"));
+            String songName = obj.get(0).get("SONG_NAME").get();
+            String Artist = obj.get(0).get("ARTIS").get();
+            Date ReleaseDate = new SimpleDateFormat("yyyy/MM/dd").parse(obj.get(0).get("RELEASE_DATE").get());
+            String Album = obj.get(0).get("ALBUM").get();
+            Object songFile = BinResource.lookup(obj.get(0).get("SONG").get());
             
             //insert data into SharedSong table
             String SongTable = "SharedSongs";
@@ -351,9 +350,9 @@ public class UserThread implements Runnable{
     
     
     //allows the client to send a friend request to another user who isn't already their friend
-    private void sendFriendRequest(JSON obj){
+    private void sendFriendRequest(JSONAdapter obj){
         int clientUserID = clientUsersID;
-        int otherUsersID = obj.getJSON().getInt("FRIEND_USER_ID");
+        int otherUsersID = obj.get(0).get("FRIEND_USER_ID").get();
         
         String table = "Friends";
         String where = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID;
@@ -377,10 +376,10 @@ public class UserThread implements Runnable{
     
     
     //chanegs the status of a friend request (accept or reject)
-    private void updateFriendRequestStatus(JSON obj){
+    private void updateFriendRequestStatus(JSONAdapter obj){
         int clientUserID = clientUsersID;
-        int FriendRequestUserID = obj.getJSON().getInt("FRIEND_USER_ID");
-        boolean accepted = Boolean.valueOf(obj.getJSON().getString("ACCEPTED"));
+        int FriendRequestUserID = obj.get(0).get("FRIEND_USER_ID").get();
+        boolean accepted = Boolean.valueOf(obj.get(0).get("ACCEPTED").get());
 
         String newStatus;
         if(accepted == true)
@@ -400,10 +399,10 @@ public class UserThread implements Runnable{
     }
         
     //adds the users message to the message board for their friends to see
-    private void addToMessageBoard(JSON obj){
+    private void addToMessageBoard(JSONAdapter obj){
         int userID = clientUsersID;
-        String title = obj.getJSON().getString("MESSAGE_TITLE");
-        String message = obj.getJSON().getString("MESSAGE");
+        String title = obj.get(0).get("MESSAGE_TITLE").get();
+        String message = obj.get(0).get("MESSAGE").get();
         
         String table = "MessageBoard";
         String TestWhere = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
@@ -438,8 +437,8 @@ public class UserThread implements Runnable{
     
     //sends the client a list of songs shared by their specified friend or themself
     //send the function a user_ID not nesseserally the clients - (friends IDs are also sent to the client with friends list)
-    private ResultSet SharedSongsList(JSON obj){
-        int userID = obj.getJSON().getInt("USER_ID");
+    private ResultSet SharedSongsList(JSONAdapter obj){
+        int userID = obj.get(0).get("USER_ID").get();
 
         String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
         String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
@@ -485,7 +484,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(){
-        int userID = clientUsersID;
+        int userID = 2; //clientUsersID;
                 
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
@@ -501,8 +500,8 @@ public class UserThread implements Runnable{
     }
     
     //removes the specified song from the server for the client
-    private void removeSong(JSON obj){
-        int songID = obj.getJSON().getInt("SONG_ID");
+    private void removeSong(JSONAdapter obj){
+        int songID = obj.get(0).get("SONG_ID").get();
         
         //test to ensure that there is a song with that ID first
         String songTable = "SharedSongs";
@@ -528,7 +527,9 @@ public class UserThread implements Runnable{
     }
     
     //removes the specified message from the message board for the client
-    private void removeMessage(JSON obj){
+    private void removeMessage(JSONAdapter obj){
+        int userID = clientUsersID;
+        String title = obj.get(0).get("MESSAGE_TITLE").get();
         
     }
     
