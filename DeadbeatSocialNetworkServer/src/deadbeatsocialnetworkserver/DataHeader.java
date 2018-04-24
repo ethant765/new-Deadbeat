@@ -10,7 +10,8 @@ package deadbeatsocialnetworkserver;
  * @author Ethan
  */
 public enum DataHeader {
-    //column name used by the server for geting the enum HEADER
+    //EVERY OPERATION BELLOW WILL REQUIRE A 'HEADER' FROM THE CLIENT TO CALL A FUNCTION
+    //AND EVERY OPERATION WILL RETURN A 'STATUS' (true/false) - TO THE CLIENT
     
     //function: handles new user creation then passes to logon to log new user on
     //Data Needed: USERNAME, PASSWORD, PROFILE_IMAGE, DOB, PLACE_OF_BIRTH,
@@ -85,5 +86,20 @@ public enum DataHeader {
     //function: changes the status of a friend request
     //Data Needed: FRIEND_USER_ID, ACCEPTED(boolean accepted 1/0 rejected)
     //Data returned: N/A
-    CHANGE_FRIEND_REQUEST_STATUS; 
+    CHANGE_FRIEND_REQUEST_STATUS,
+    
+    //function: allows the user to remove a song they have shared from the database
+    //Data Needed: SONG_ID
+    //Data returned: N/A
+    REMOVE_SONG,
+    
+    //function: allows the user to remove a message they have added from the message board
+    //Data Needed: MESSAGE_TITLE
+    //Data returned: N/A
+    REMOVE_MESSAGE,
+    
+    //function: removes the users profile - delete account
+    //Data Needed: N/A
+    //Data returned: N/A
+    REMOVE_USER;
 }

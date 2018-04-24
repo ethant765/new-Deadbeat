@@ -43,7 +43,7 @@ public class DBInteractions {
     }
     
     public ResultSet GetRecord(String values, String tableName, String condition){
-        String SQLQuery = "select" + values + " from " + tableName;
+        String SQLQuery = "select " + values + " from " + tableName;
         if(condition != null){
             SQLQuery += " where " + condition;
         }
@@ -62,6 +62,7 @@ public class DBInteractions {
             stmt = conn.createStatement();
             
             if("select".equals(SQLCommand)){
+                Log.Out(SQLQuery);
                 res = stmt.executeQuery(SQLQuery);
             }
             else{

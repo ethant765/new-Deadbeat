@@ -41,7 +41,7 @@ public class UserThread implements Runnable{
         //test for active user - if they are set their UserID, otherwise this will be set during their login process
         String table = "members";
         String select = "User_ID";
-        String condition = "IPAddress = " + userIP;
+        String condition = "IPAddress = '" + userIP.toString().substring(1) + "'";
         ResultSet rs = dataChange.GetRecord(select, table, condition);
         
         try{
@@ -85,6 +85,9 @@ public class UserThread implements Runnable{
             else if(String.valueOf(headers.FRIENDS_LIST).equals(header)) returnObject.fromResultSet(FriendsList()); 
             else if(String.valueOf(headers.SEND_FRIEND_REQUEST).equals(header)) sendFriendRequest(recievedObject); 
             else if(String.valueOf(headers.CHANGE_FRIEND_REQUEST_STATUS).equals(header)) updateFriendRequestStatus(recievedObject); 
+            else if(String.valueOf(headers.REMOVE_MESSAGE).equals(header)) removeMessage(recievedObject);
+            else if(String.valueOf(headers.REMOVE_SONG).equals(header)) removeSong(recievedObject);
+            else if(String.valueOf(headers.REMOVE_USER).equals(header)) removeUser();
             else{//handle error of incorrect or no header infromation in recieved string
                 ErrorToUser(false);//false returns error to client
             }
@@ -150,7 +153,7 @@ public class UserThread implements Runnable{
                 dataChange.InsertRecord(tableName, tableCols, Values);
 
                 //get user id in result set to send back to client
-                String ReturnID = "*";
+                String ReturnID = "User_ID";
                 //use same table as insert operation above
                 String condition = "UserName = " + userName;
 
@@ -226,21 +229,30 @@ public class UserThread implements Runnable{
         try{
             //create a JSON object to store all the required information
             JSON returnData = new JSON();
-
-            //send a list of their friends to the user
-            FriendsList();
+            
+            //create a result set list to use when creating a json string of it
+            List<ResultSet> resultsHolder = new ArrayList<>();
+            
+            //add the users passed data result set into the list
+            resultsHolder.add(userData);
+            
+            //add the users friends list to the resultSet list
+            resultsHolder.add(FriendsList());
 
             //send list of recieved but not accepted/rejected friend requests
-            updateFriendRequests();
+            resultsHolder.add(updateFriendRequests());
 
             //send list of messageboard items - ResultSet updateMessageBoard()
-            updateMessageBoard();
+            resultsHolder.add(updateMessageBoard());
 
             //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
-            updateActiveUsers();
+            resultsHolder.add(updateActiveUsers());
             
             //add the users IP address to the active members table
             addIP(obj.getJSON().getInt("USER_ID"));
+            
+            //turn all the resultSet list data into a JSON string ready to be sent
+            returnData.fromMergedResultSets(resultsHolder);
 
             //send this data to the function which will return it to client
             sendToUser(returnData);
@@ -344,11 +356,23 @@ public class UserThread implements Runnable{
         int otherUsersID = obj.getJSON().getInt("FRIEND_USER_ID");
         
         String table = "Friends";
-        String cols = "(User_ID, Friend_ID, Status_ID)";
-        String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
-        dataChange.InsertRecord(table, cols, vals);
-        
-        //test to ensure that the 
+        String where = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID;
+        //test to ensure they havn't already been added to the friends table together
+        if(dataChange.GetRecord("*", table, where) != null){ //if it isn't null the two users have been added together on this table before
+            ErrorToUser(false);
+        }
+        else{
+            
+            String cols = "(User_ID, Friend_ID, Status_ID)";
+            String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
+            dataChange.InsertRecord(table, cols, vals);
+
+            //test to ensure that the friend request is sent
+            String select = "*";
+            String whereTest = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID + " AND Status_ID = 'wait'";
+            if(dataChange.GetRecord(select, table, whereTest) == null)//error occured during insert opperation
+                ErrorToUser(false); //ensure user is sent status with error
+        }
     }
     
     
@@ -367,7 +391,12 @@ public class UserThread implements Runnable{
         String table = "Friends";
         String valChange = "Status_ID = '" + newStatus + "'";
         String condition = "User_ID = " + FriendRequestUserID + " AND Friend_ID = " + clientUserID;
-         dataChange.UpdateRecord(table, valChange, condition);
+        dataChange.UpdateRecord(table, valChange, condition);
+        
+        //test that the data has been updated
+        String where = "User_ID = " + clientUserID + " AND Friend_ID = " + FriendRequestUserID + " AND Status_ID = '" + newStatus + "'";
+        if(dataChange.GetRecord("*", table, where) == null)//if null error has occured somewhere in the sql data update
+            ErrorToUser(false);
     }
         
     //adds the users message to the message board for their friends to see
@@ -376,11 +405,24 @@ public class UserThread implements Runnable{
         String title = obj.getJSON().getString("MESSAGE_TITLE");
         String message = obj.getJSON().getString("MESSAGE");
         
-        
         String table = "MessageBoard";
-        String cols = "(User_ID, MessageTitle, Messages)";
-        String vals = "(" + userID + ", '" + title + "', '" + message + "')";
-        dataChange.InsertRecord(table, cols, vals);
+        String TestWhere = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
+        
+        //test to ensure that the currernt user hasn't already got a message with that title
+        //this is as the title & userID are used as a joint PK
+        if(dataChange.GetRecord("*", table, TestWhere) != null){ //if not null then already exists
+            ErrorToUser(false);
+        }
+        else{
+            String cols = "(User_ID, MessageTitle, Messages)";
+            String vals = "(" + userID + ", '" + title + "', '" + message + "')";
+            dataChange.InsertRecord(table, cols, vals);
+
+            //test to ensure that the message has been added
+            //same where can be used as initial test in function
+            if(dataChange.GetRecord("*", table, TestWhere) == null)//should now be a value there so null would mean error
+                ErrorToUser(false);
+        }
     }
     
     //sends client list of all currently online users
@@ -456,5 +498,42 @@ public class UserThread implements Runnable{
                " AND Friends.Status_ID = 'con')";
        
         return dataChange.GetCustomRecord(sqlCmd);
+    }
+    
+    //removes the specified song from the server for the client
+    private void removeSong(JSON obj){
+        int songID = obj.getJSON().getInt("SONG_ID");
+        
+        //test to ensure that there is a song with that ID first
+        String songTable = "SharedSongs";
+        String whereTest = "SharedSongs_ID = " + songID;
+        if(dataChange.GetRecord("*", songTable, whereTest) == null){ //if no song to begin with there has been an error somewhere
+            ErrorToUser(false);
+        }
+        else{
+            //remove song form song table, and profileSongTable
+            String ProfileSongTable = "ProfileSharedSongs";
+            String whereProfileSong = "SharedSong_ID = " + songID;
+            dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
+            String whereSong = "SharedSongs_ID = " + songID;
+            dataChange.DeleteRecord(songTable, whereSong);
+            
+            //test that the database deletes have performed correctly
+            ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
+            ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
+            
+            if(songResult != null || profileSongResult != null)//if either return data there has been a deleting error
+                ErrorToUser(false);
+        }
+    }
+    
+    //removes the specified message from the message board for the client
+    private void removeMessage(JSON obj){
+        
+    }
+    
+    //removes/deletes the user account
+    private void removeUser(){
+        
     }
 }
