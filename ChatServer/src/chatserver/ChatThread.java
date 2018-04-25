@@ -75,7 +75,7 @@ public class ChatThread implements Runnable {
         JSONAdapter sendBackData = new JSONAdapter();
         
         if(String.valueOf(headers.RECEIVE_MESSAGES).equals(headerInfo)) 
-            receiveMessages();
+            receiveMessages(jAdapter);
         else if(String.valueOf(headers.SEND_MESSAGE).equals(headerInfo)) {
             sendMessage(jAdapter);
             //pass return infromation to function which handles client interaction
@@ -111,8 +111,9 @@ public class ChatThread implements Runnable {
     }
 
     
-    //function to return messages to the client based on what has been sent to them
-    private void receiveMessages(){
+    //function to return messages to the client based on what has been sent in a chat with the specific user
+    private void receiveMessages(JSONAdapter info){
+        int otherUserID = info.get("OTHER_CHAT_USER_ID").get();
         
         JSONAdapter jsonData = new JSONAdapter();
         List<ResultSet> resultsHolder = new ArrayList<>();
@@ -120,13 +121,13 @@ public class ChatThread implements Runnable {
         //NP = no payload
         String NPselect = "Message_ID, Sender_ID, Content";
         String NPfrom = "Message";
-        String NPwhere = "Reciever_ID = " + clientID + " AND Attachment IS NULL";
+        String NPwhere = "((Reciever_ID = " + clientID + " AND Sender_ID = " + otherUserID + ") OR (Reciever_ID = " + otherUserID + " AND Sender_ID = " + clientID + ")) AND Attachment IS NULL";
         resultsHolder.add(dataChange.GetRecord(NPselect, NPfrom, NPwhere));
         
         //payload
         String Pselect = "Message_ID, Sender_ID, Content, Payload";
         String Pfrom = "Message LEFT JOIN Attachment ON Message.Attachment = Attachment.Attachment_ID";
-        String Pwhere = "Reciever_ID = " + clientID + "AND Message.Attachment IS NOT NULL";
+        String Pwhere = "((Reciever_ID = " + clientID + " AND Sender_ID = " + otherUserID + ") OR (Reciever_ID = " + otherUserID + " AND Sender_ID = " + clientID + ")) AND Attachment IS NOT NULL";
         resultsHolder.add(dataChange.GetRecord(Pselect, Pfrom, NPwhere));
         
         try{
