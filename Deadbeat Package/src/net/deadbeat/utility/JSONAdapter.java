@@ -9,6 +9,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.List;
+import javafx.concurrent.Task;
 
 /**
  *
@@ -21,17 +22,43 @@ public class JSONAdapter extends JSONCollection {
         JSONAdapter ja = new JSONAdapter();
         ja.fromString("{'name':'bob','age':24,'songs':[12,42]}");
         
-        Log.Out( ja.get(0).get("name").<String>get() );
+        Log.Out( ja.get(0).get("songs").<String[]>get()[1] );
         
     }
     
+    /**
+     * Get the first {@link JSONObject} in this adapter.
+     * 
+     * @return 
+     */
     public JSONObject get(){
         return this.get(0);
     }
     
+    /**
+     * Get the {@link JSONProperty} associated with the {@code propertyName} from the first {@link JSONObject}.
+     * <p>
+     * This is the same as calling {@code get(0).get(propertyName)}.
+     * <p>
+     * This method will call the {@code JSONAdapter::get()} method and search for the property in the returned result
+     * 
+     * @param propertyName the property name of the property you want to get
+     * @return 
+     */
+    public JSONProperty get(String propertyName){
+        return this.get().get(propertyName);
+    }
+    
+    /**
+     * Generate Standard-compliant JSON String
+     * @param collection
+     * @param formatted
+     * @return 
+     */
     public final static String buildString(JSONCollection collection , boolean formatted){
         String new_line = (formatted ? "\n" : "");
         String tab_line = (formatted ? "\t" : "");
+        
         
         String res = "[" + new_line;
         for (int i = 0 ; i < collection.size() ; i ++){
@@ -54,6 +81,12 @@ public class JSONAdapter extends JSONCollection {
         return buildString(this, false);
     }
     
+    /**
+     * Loads the JSON string into this adapter.
+     * <p>
+     * 
+     * @param string Valid JSON String
+     */
     public void fromString(CharSequence string){
         
         List<String> t = Tokenizer.Tokenize(string.toString());
@@ -72,13 +105,25 @@ public class JSONAdapter extends JSONCollection {
         
     }
     
-    
+    /**
+     * Takes a {@link List} of {@link ResultSet} and populates this adapter.
+     * <p>
+     * Once completed, the current adapter will contain a list of {@link JSONObject}. 
+     * <p>
+     * This method will call {@code fromMergedResultSets} on each of the elements in the list provided.
+     * @param rsets List of ResultSets
+     * @throws SQLException 
+     */
     public void fromMergedResultSets(List<ResultSet> rsets) throws SQLException{
         for (ResultSet r : rsets){
             addResultSet(r);
         }
     }
     
+    /**
+     * Populates this adapter with a {@link JSONObject} from the {@link ResultSet} provided.
+     * @param rset ResultSet
+     */
     public void fromResultSet(ResultSet rset){
         
         try{
@@ -116,7 +161,7 @@ public class JSONAdapter extends JSONCollection {
                             dataObj.add( new JSONProperty(nameCol, rset.getDate(nameCol) + "") );
                             break;
                         case java.sql.Types.BLOB:
-                            dataObj.add( new JSONProperty(nameCol, BinResource.reference(rset.getBlob(nameCol)) ) );
+                            dataObj.add( new JSONProperty(nameCol, "BLOB::"+BinResource.reference(rset.getBlob(nameCol)) ) );
                             break;
                         default:
                             dataObj.add( new JSONProperty(nameCol, rset.getObject(nameCol) + "") );

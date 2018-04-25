@@ -5,6 +5,7 @@
  */
 package net.deadbeat.utility;
 
+import java.util.List;
 import net.deadbeat.utility.Tokenizer.TokenType;
 
 /**
@@ -24,7 +25,10 @@ public class JSONProperty {
         
         if (dataType == Tokenizer.TokenType.UNDEFINED){
             String serialValue = value.trim(); Tokenizer.TokenType type;
-            if ( serialValue.equalsIgnoreCase("false") || serialValue.equalsIgnoreCase("true") ){
+            if ( serialValue.startsWith("BLOB::") ){
+                type = Tokenizer.TokenType.BLOB;
+            }
+            else if ( serialValue.equalsIgnoreCase("false") || serialValue.equalsIgnoreCase("true") ){
                 type = Tokenizer.TokenType.BOOLEAN;
             }
             else if ( Tokenizer.isQuote( serialValue.charAt(0) ) && Tokenizer.isQuote( serialValue.charAt(serialValue.length() - 1) ) ){
@@ -62,8 +66,29 @@ public class JSONProperty {
         this(key,value,Tokenizer.TokenType.UNDEFINED);
     }
     
+    /**
+     * Get the preserved value of the property.
+     * <p>
+     * When a data type {@code T} is defined, the returned value will be cast into the request data type
+     * 
+     * @param <T> Data type (Default Object)
+     * @return 
+     */
     public <T> T get(){
-        return (T)Value;
+        switch (data_type) {
+            case STRING:
+                return (T)Tokenizer.removeQuotation( Value );
+            case LIST:
+                return (T)Tokenizer.getWrappedChars(Value, "[", "]").split(",");
+            case INT:
+                return (T)Value;
+            case BOOLEAN:
+                return (T)Boolean.valueOf(Value);
+            case BLOB:
+                return (T)BinResource.lookup(Value);
+            default:
+                return (T)Value;
+        }
     }
     
     public String getValue(){
@@ -73,9 +98,9 @@ public class JSONProperty {
         }
         else switch (data_type) {
             case STRING:
-                return Tokenizer.removeQuotation( this.<String>get() );
+                return Tokenizer.removeQuotation( Value );
             default:
-                return get();
+                return Value;
         }
         
     }

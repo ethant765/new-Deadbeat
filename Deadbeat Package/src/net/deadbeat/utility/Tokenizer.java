@@ -30,7 +30,8 @@ public class Tokenizer {
         COLON,
         COMMA,
         KEY_VALUE,
-        UNDEFINED;
+        UNDEFINED,
+        BLOB;
     }
     private static final char SINGLE_QUOTE = '\'';
     private static final char DOUBLE_QUOTE = '"';
