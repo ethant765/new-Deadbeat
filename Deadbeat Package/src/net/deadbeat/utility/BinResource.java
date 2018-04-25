@@ -5,6 +5,7 @@
  */
 package net.deadbeat.utility;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -13,7 +14,7 @@ import java.util.UUID;
  * @author darylcecile
  */
 public class BinResource {
-    private static List< Pair > container;
+    private static List< Pair > container = new ArrayList<>();
     
     public static String reference(Object item){
         

@@ -14,7 +14,7 @@ package net.deadbeat.utility;
 public class Pair<K,V> {
     public K key;
     public V value;
-    public <T> Pair(K k, V v){
+    public Pair(K k, V v){
         key = k;
         value = v;
     }
