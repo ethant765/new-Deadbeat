@@ -16,7 +16,6 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import net.deadbeat.core.EventAdapter;
 import net.deadbeat.schedule.EName;
 import net.deadbeat.utility.Log;
 
@@ -35,9 +34,6 @@ public class Textbox extends Component{
     public Boolean mouseOver = false;
     
     public Textbox(){
-        
-        
-        
     }
 
     @Override

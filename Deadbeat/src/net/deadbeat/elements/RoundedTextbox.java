@@ -19,14 +19,8 @@ import java.awt.RenderingHints;
 public class RoundedTextbox extends Textbox{
     
     public RoundedTextbox(){
-        super();
     }
 
-    @Override
-    public void whenReady() {
-        super.whenReady();
-    }
-    
     @Override
     public void whenPainting(Graphics g) {
         Graphics2D graphics = (Graphics2D)g.create();

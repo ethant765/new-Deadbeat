@@ -5,10 +5,8 @@
  */
 package net.deadbeat.elements;
 
-import java.awt.Dimension;
 import java.awt.Graphics;
-import net.deadbeat.layout.RawLayout;
-import net.deadbeat.utility.Log;
+import static net.deadbeat.elements.LayoutAdapter.win;
 
 /**
  *
@@ -23,42 +21,27 @@ public class ConversationPanel extends Panel{
 
     public final void resize(){
         
-        int w = Width - 30;
-        int h = LayoutAdapter.CBAR_HEIGHT + 1; //24
-        int _y = Height - (LayoutAdapter.CBAR_HEIGHT + 16);
-        int _x = 15;
-        
-        messageBox.setBound( _x,_y  ,w, h );
-        messageBox.setPreferredSize(new Dimension(w,h));
-        messageBox.setBounds( _x,_y,w,h);
+        messageBox.setBound(15, Height - (LayoutAdapter.CBAR_HEIGHT + 16) , 30 - Width , LayoutAdapter.CBAR_HEIGHT + 1 );
         
     }
     
     @Override
     public void whenReady() {
-        super.whenReady(); 
-        
-        this.setLayout(new RawLayout());
         
         messageBox = new Textbox();
         chat = new Panel();
         
-        Log.Out(Width,Height);
-        
-        messageBox.setBound(15, 0 , 30 - Width , 24 );        
-        
-        messageBox.setPreferredSize( new Dimension(30 - Width , 24) );
-
-        Log.Out(Width,Height);
+        messageBox.setBound(15, 0 , 30 - Width , 24 );
         
         messageBox.setText("");
         messageBox.setPlaceholder("Type a message...");
         messageBox.setAlignmentX(0f);
         messageBox.setAlignmentY(0f);
         
-        this.add(messageBox);
-        // this.add(chat);
+        add(messageBox);
+        add(chat);
         
+        super.whenReady(); 
     }
 
     @Override
