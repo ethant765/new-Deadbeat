@@ -5,13 +5,16 @@
  */
 package net.deadbeat.beta;
 
+import net.deadbeat.elements.Canvas;
+import net.deadbeat.elements.Overlay;
 import net.deadbeat.layout.RawLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 import net.deadbeat.core.TaskController;
+import net.deadbeat.elements.Image;
+import net.deadbeat.elements.TitleBar;
 
-import net.deadbeat.element.*;
 
 // uses jar
 import net.deadbeat.utility.Log;
@@ -37,6 +40,8 @@ public class Window extends javax.swing.JFrame {
     
     public Canvas canvas;
     public Overlay overlay;
+    public Image badge;
+    public TitleBar tbar;
     
     private void initFrames(){
         
@@ -52,8 +57,11 @@ public class Window extends javax.swing.JFrame {
         
         cproperties.customPaint(true).size(900,640);
         
+        LayoutAdapter.SetUp();
+        
+        canvas.add(tbar);
         canvas.add(overlay);
-     
+        
         this.getRootPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
@@ -62,6 +70,8 @@ public class Window extends javax.swing.JFrame {
             }
             
         });
+        
+        LayoutAdapter.Update();
         
         Log.Out("Frame Initialized");
 

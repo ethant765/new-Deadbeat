@@ -18,6 +18,10 @@ public enum EName {
     MOUSE_CLICK,
     
     KEY_DOWN,
-    KEY_UP;
+    KEY_UP,
+    KEY_PRESSED,
+    KEY_TYPED,
+    
+    MOUSE_DRAG;
     
 }

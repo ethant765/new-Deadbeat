@@ -5,9 +5,17 @@
  */
 package net.deadbeat.beta;
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.LayoutManager;
+import java.awt.geom.RoundRectangle2D;
 import javax.swing.JFrame;
+
+import net.deadbeat.elements.Image;
+import net.deadbeat.elements.RoundedTextbox;
+import net.deadbeat.elements.Button;
+import net.deadbeat.elements.TitleBar;
+import net.deadbeat.schedule.EName;
 
 /**
  *
@@ -57,7 +65,111 @@ public class LayoutAdapter {
      * @return
      */
     public static CustomProperty setProperty(Window container){
+        win = container;
         return (new CustomProperty(container));
+    }
+    
+    public static RoundedTextbox searchbox;
+    public static Window win;
+    
+    public static Button closeBtn;
+    public static Button minBtn;
+    public static Button maxBtn;
+    
+    public static final int CBAR_GAP = 5;
+    public static final int CBAR_DIAMETER = 13;
+    public static final int CBAR_HEIGHT = 23;
+    
+    public static void SetUp(){
+        
+        win.badge = new Image("logo.png");
+        searchbox = new RoundedTextbox();
+        win.tbar = new TitleBar(win);
+        
+        win.overlay.add(searchbox);
+        
+        win.overlay.On(EName.MOUSE_CLICK, (results) -> {
+            searchbox.loseFocus();
+        });
+        
+        searchbox.setPosition(0, 0);
+        
+            closeBtn = new Button();
+            minBtn = new Button();
+            maxBtn = new Button();
+            
+            closeBtn.On(EName.MOUSE_CLICK, (results) -> {
+                System.exit(0);
+            });
+            
+            minBtn.On(EName.MOUSE_CLICK, (results) -> {
+                win.setState(JFrame.ICONIFIED);
+            });
+            
+            maxBtn.On(EName.MOUSE_CLICK, (results) -> {
+                if ( win.getExtendedState() == JFrame.MAXIMIZED_BOTH ){
+                    win.setExtendedState(JFrame.NORMAL);
+                }
+                else{
+                    win.setExtendedState(JFrame.MAXIMIZED_BOTH);
+                }
+                win.paintAll(win.getGraphics());
+            });
+            
+        
+    }
+    
+    public static void Update(){
+        final int sidebarWidth = (win.getWidth()/100) * 25;
+        
+        win.setShape(new RoundRectangle2D.Double(0, 0, win.getWidth(), win.getHeight(), 6, 6));
+        
+        win.canvas.setDimension(win.getWidth(), win.getHeight());
+        win.canvas.setBounds(0, 0, win.getWidth(), win.getHeight());
+        win.overlay.setBounds(sidebarWidth, 0, win.getWidth() - sidebarWidth , win.getHeight());
+        
+        int logoHeight = (int) ( (sidebarWidth - 32) / 1.85 );
+        win.badge.setBounds(14, 20, sidebarWidth - 32 , logoHeight );
+        win.badge.repaintIn( win );
+        
+        win.tbar.setBounds(0,0,win.getWidth(),CBAR_HEIGHT);
+                
+        win.tbar.add(closeBtn);
+        win.tbar.add(minBtn);
+        win.tbar.add(maxBtn);
+        
+        closeBtn.setColor(new Color(244, 67, 54), new Color(198, 40, 40));
+        minBtn.setColor(new Color(255, 193, 7), new Color(255, 143, 0));
+        maxBtn.setColor(new Color(76, 175, 80), new Color(46, 125, 50));
+
+        closeBtn.setBounds(
+                CBAR_GAP,
+                CBAR_GAP,
+                CBAR_DIAMETER,
+                CBAR_DIAMETER
+        );
+        minBtn.setBounds(
+                (CBAR_GAP * 2) + CBAR_DIAMETER,
+                CBAR_GAP,
+                CBAR_DIAMETER,
+                CBAR_DIAMETER
+        );
+        maxBtn.setBounds(
+                (CBAR_GAP * 3) + (CBAR_DIAMETER * 2),
+                CBAR_GAP,
+                CBAR_DIAMETER,
+                CBAR_DIAMETER
+        );
+        
+        // Searchbox
+        searchbox.setAlignmentX(0f);
+        searchbox.setAlignmentY(0f);
+        
+        searchbox.setText("");
+        searchbox.setPreferredSize(new Dimension(150 ,24));
+        searchbox.setBounds( ( win.getWidth() - sidebarWidth ) - ( 162 ) ,11,150, 24);
+        searchbox.setFocusable(true);
+        searchbox.setPlaceholder("Search");
     }
     
 }
