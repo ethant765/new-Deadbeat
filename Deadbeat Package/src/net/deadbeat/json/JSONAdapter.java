@@ -5,6 +5,7 @@
  */
 package net.deadbeat.json;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
@@ -155,19 +156,23 @@ public class JSONAdapter extends JSONCollection {
                     
                     switch (resultMetaData.getColumnType(i + 1)){
                         case java.sql.Types.INTEGER:
-                            dataObj.add( new JSONProperty(nameCol, rset.getInt(nameCol) + "") );
+                            int ri = rset.getInt(nameCol);
+                            dataObj.add( new JSONProperty(nameCol, ri + "") );
                             break;
                         case java.sql.Types.VARCHAR:
-                            dataObj.add( new JSONProperty(nameCol, rset.getString(nameCol) ) );
+                            String rs = rset.getString(nameCol);
+                            dataObj.add( new JSONProperty(nameCol, (rs==null?"":rs) ) );
                             break;
                         case java.sql.Types.DATE:
-                            dataObj.add( new JSONProperty(nameCol, rset.getDate(nameCol) + "") );
+                            Date rd = rset.getDate(nameCol);
+                            dataObj.add( new JSONProperty(nameCol, rd + "") );
                             break;
                         case java.sql.Types.BLOB:
                             dataObj.add( new JSONProperty(nameCol, "BLOB::"+BinResource.reference(rset.getBlob(nameCol)) ) );
                             break;
                         default:
-                            dataObj.add( new JSONProperty(nameCol, rset.getObject(nameCol) + "") );
+                            Object ro = rset.getObject(nameCol);
+                            dataObj.add( new JSONProperty(nameCol, ro+ "") );
                     }
                 }
                 
