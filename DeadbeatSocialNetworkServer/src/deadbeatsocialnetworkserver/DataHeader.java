@@ -10,7 +10,8 @@ package deadbeatsocialnetworkserver;
  * @author Ethan
  */
 public enum DataHeader {
-    //EVERY OPERATION BELLOW WILL REQUIRE A 'HEADER' FROM THE CLIENT TO CALL A FUNCTION
+    //EVERY OPERATION BELLOW WILL REQUIRE A 'HEADER': FROM THE CLIENT TO CALL A FUNCTION
+    //EVERY STRING SHOULD ALSO INCLUDE THE USER 'USERNAME':
     //AND EVERY OPERATION WILL RETURN A 'STATUS' (true/false) - TO THE CLIENT
     
     //function: handles new user creation then passes to logon to log new user on
@@ -64,7 +65,7 @@ public enum DataHeader {
     UPDATE_MESSAGE_BOARD, 
     
     //function: adds users message to messageBoard
-    //Data Needed: MESSAGE_TITLE, MESSAGE
+    //Data Needed: MESSAGE
     //Data returned: N/A
     ADD_TO_MESSAGE_BOARD, 
     

@@ -43,19 +43,6 @@ public class UserThread implements Runnable{
         userIP = pak.getAddress();
         userPort = pak.getPort();
         
-        //test for active user - if they are set their UserID, otherwise this will be set during their login process
-        String table = "Members";
-        String select = "User_ID";
-        String condition = "IPAddress = '" + userIP.toString().substring(1) + "'";
-        Log.Out(condition);
-        ResultSet rs = dataChange.GetRecord(select, table, condition);
-        
-        try{
-            if(rs.next()){
-                clientUsersID = rs.getInt("User_ID");
-            }
-        }catch(Exception e){Log.Throw(e);}
-        
         opSuccess = true; // default to true and chenge to false later if an error occured during an operation
     }
     
@@ -74,6 +61,21 @@ public class UserThread implements Runnable{
         JSONAdapter recievedObject = new JSONAdapter();
         recievedObject.fromString(Message);
         String header = recievedObject.get(0).get("HEADER").get();
+        
+        String testNew = String.valueOf(headers.LOGIN_NEW_USER);
+        String testExist = String.valueOf(headers.LOGIN_EXISTING_USER);
+        if(header != testNew && header != testExist){
+            String SentUserName = recievedObject.get().get("USERNAME").get();
+            
+            String select = "User_ID";
+            String from = "Members";
+            String where = "UserName = '" + SentUserName + "'";
+            ResultSet rs = dataChange.GetRecord(select, from, where);
+            
+            try{
+                clientUsersID = rs.getInt("USER_ID");
+            }catch(Exception e){Log.Throw(e);}
+        }
                 
         //create the JSONobject which will be used to return data
         JSONAdapter returnObject = new JSONAdapter();
@@ -133,10 +135,6 @@ public class UserThread implements Runnable{
     private void ErrorToUser(boolean success){
         //if function is called with a boolean false - then error has occured and change error boolean at top of class to false
         opSuccess = success;
-    }
-    
-    private void addUserIDfromIP(){
-        
     }
     
     
@@ -231,11 +229,11 @@ public class UserThread implements Runnable{
         
     }
     //adds new users IP to the active member sql table
-    private void addIP(int ID){
+    private void addIP(int ID, String Username){
         
         String insertInto = "Members";
-        String cols = "(IPAddress, User_ID)";
-        String vals = "(" + userIP + ", " + ID + ")";
+        String cols = "(IPAddress, User_ID, UserName)";
+        String vals = "(" + userIP + ", " + ID + ", '" + Username + "')";
         dataChange.InsertRecord(insertInto, cols, vals);
         
         //after data is entered into the database check to endure it has been added correctly
@@ -268,7 +266,7 @@ public class UserThread implements Runnable{
             
             
             //add the users IP address to the active members table
-            addIP(obj.get(0).get("USER_ID").get());
+            addIP(obj.get(0).get("USER_ID").get(), obj.get("USERNAME").get());
             
             //turn all the resultSet list data into a JSON string ready to be sent
             returnData.fromMergedResultSets(resultsHolder);
@@ -325,6 +323,7 @@ public class UserThread implements Runnable{
             
         } catch(Exception e){Log.Throw(e);}
     }
+    
     //generates a new unique ID for songs being added
     private int songIdGen(){
         //loop IDs until a valid one has been found then return the first valid one
@@ -400,7 +399,7 @@ public class UserThread implements Runnable{
     //adds the users message to the message board for their friends to see
     private void addToMessageBoard(JSONAdapter obj){
         int userID = clientUsersID;
-        String title = obj.get(0).get("MESSAGE_TITLE").get();
+        String title = genMessageTitle(userID);
         String message = obj.get(0).get("MESSAGE").get();
         
         String table = "MessageBoard";
@@ -423,6 +422,23 @@ public class UserThread implements Runnable{
                     ErrorToUser(false);
             }
         }catch(Exception e){Log.Throw(e);}
+    }
+    
+    //generate a message title for the MessateBoardTable PK
+    private String genMessageTitle(int userID){
+        String MessageTitle = String.valueOf(userID);
+        int num = 0;
+        
+        String from = "MessageBoard";
+        String where = "User_ID = " + userID;
+        ResultSet rs = dataChange.GetRecord("COUNT(*)", from, where);
+        try{
+            if(rs.next())
+                num = rs.getInt("rowcunt");
+            Log.Out(num);
+        }catch(Exception e){Log.Throw(e);}
+        num++;
+        return MessageTitle + num;
     }
     
     //sends client list of all currently online users
