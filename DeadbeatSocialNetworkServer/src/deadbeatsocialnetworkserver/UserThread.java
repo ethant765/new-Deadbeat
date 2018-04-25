@@ -5,6 +5,8 @@
  */
 package deadbeatsocialnetworkserver;
 
+import net.deadbeat.json.JSONAdapter;
+import net.deadbeat.json.JSONProperty;
 import net.deadbeat.utility.*;
 import java.net.*;
 import java.sql.ResultSet;

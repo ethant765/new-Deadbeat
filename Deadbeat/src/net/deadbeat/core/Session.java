@@ -16,13 +16,13 @@ public final class Session {
     public String SessionId;
     public User user;
     
-    public Session(User user,Task<String> onError){
+    public Session(User user,ITask<String> onError){
         this.user = user;
         Log.Out("Attempting Authentication...");
         attemptLogin(onError);
     }
     
-    public void attemptLogin(Task<String> onError){
+    public void attemptLogin(ITask<String> onError){
         user.logIn((users)->{
             if (users[0].isAuthenticated()){
                 SessionId = java.util.UUID.randomUUID().toString() +"_"+ users[0].getUserId();

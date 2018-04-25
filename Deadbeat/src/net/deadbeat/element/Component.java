@@ -10,7 +10,7 @@ import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JComponent;
-import net.deadbeat.core.Task;
+import net.deadbeat.core.ITask;
 import net.deadbeat.core.TaskController;
 import net.deadbeat.schedule.EName;
 import net.deadbeat.utility.Log;
@@ -22,7 +22,7 @@ import net.deadbeat.utility.Pair;
  */
 public abstract class Component extends JComponent{
     
-    private final List<Pair<EName,Task>> events;
+    private final List<Pair<EName,ITask>> events;
     
     public int Width;
     public int Height;
@@ -31,18 +31,21 @@ public abstract class Component extends JComponent{
 
     public Component(){
         events = new ArrayList<>();
+        TaskController.runAfter(() -> {
+            setLayout( null );
+        });
     }
     
-    public void On(String eventName,Task handler){
+    public void On(String eventName,ITask handler){
         events.add( new Pair(eventName,handler) );
     }
     
     public final void Create(){
         // All events have been added, process
         
-        for (Pair<EName,Task> event : events){
+        for (Pair<EName,ITask> event : events){
             EName eventName = event.getKey();
-            Task eventHandler = event.getValue();
+            ITask eventHandler = event.getValue();
             
             switch (eventName){
                 

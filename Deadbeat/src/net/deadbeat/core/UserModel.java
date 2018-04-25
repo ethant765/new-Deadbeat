@@ -3,7 +3,6 @@ package net.deadbeat.core;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.deadbeat.core.Task;
 import net.deadbeat.utility.Security;
 
 /**
@@ -43,7 +42,7 @@ public class UserModel {
         return res;
     }
     
-    public void getServerInformation(Task<Object> task){
+    public void getServerInformation(ITask<Object> task){
         // Run on later when system is not busy, to prevent UI hanging
         TaskController.runAfter(()->{
             //TODO download/connect to server and fetch user info (if exists) or create info

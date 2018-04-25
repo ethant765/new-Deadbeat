@@ -10,6 +10,7 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import net.deadbeat.core.TaskController;
 
 /**
  *
@@ -20,7 +21,7 @@ public class Canvas extends Component {
     private final int shadowWidth = 100;
     
     public Canvas(){
-        
+        super();
     }
 
     @Override

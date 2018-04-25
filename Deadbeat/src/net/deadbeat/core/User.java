@@ -28,7 +28,7 @@ public class User {
         _username = emailAddress;
     }
     
-    public void logIn(Task<User> onComplete,Task<String> onError){
+    public void logIn(ITask<User> onComplete,ITask<String> onError){
         _userModel.getServerInformation((res)->{
             try{
                 _username = (String)res[0];

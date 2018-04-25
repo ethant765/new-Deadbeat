@@ -12,6 +12,6 @@ package net.deadbeat.core;
  */
 
 @FunctionalInterface
-public interface Task<T> {
+public interface ITask<T> {
     void Run(T... results);
 }

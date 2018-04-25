@@ -6,87 +6,64 @@
 package net.deadbeat.beta;
 
 import net.deadbeat.layout.RawLayout;
-import net.deadbeat.ui.CoreOverlayPanel;
-import net.deadbeat.ui.CorePanel;
-import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import javax.swing.JFrame;
-import net.deadbeat.core.LayoutAdapter;
-import net.deadbeat.ui.CoreBar;
 
-import static net.deadbeat.core.LayoutAdapter.cbar;
 import net.deadbeat.core.TaskController;
 
+import net.deadbeat.element.*;
+
 // uses jar
-import net.deadbeat.utility.JSON;
 import net.deadbeat.utility.Log;
 
 /**
  *
  * @author darylcecile
  */
-public class Home extends javax.swing.JFrame {
+public class Window extends javax.swing.JFrame {
 
     /**
      * Creates new form Home
      */
-    public Home() {
+    public Window() {
         
+        Log.Out("Created Window");
         TaskController.runOnUiThread(()->{
             initFrames();
+            Log.Out("Initialized Frames");
         });
 
     }
     
+    public Canvas canvas;
+    public Overlay overlay;
+    
     private void initFrames(){
         
-        // Add custom layout to control how things are position
-        this.setLayout(new RawLayout());
+        LayoutAdapter.CustomProperty cproperties = LayoutAdapter.setProperty(this);
+        
+        cproperties.layout(new RawLayout());
         
         // Create the main panels
-        corepanel = new CorePanel();
-        overlaypanel = new CoreOverlayPanel();
+        canvas = new Canvas();
+        overlay = new Overlay();
         
+        add(canvas);
         
+        cproperties.customPaint(true).size(900,640);
         
-        // Remove default layout for panels
-        corepanel.setLayout( null );
-        overlaypanel.setLayout( null );
-        cbar.setLayout(null);
-        
-        LayoutAdapter.prepareElements(corepanel, overlaypanel, this, cbar);
-        
-        setUndecorated(true);
-        JFrame.setDefaultLookAndFeelDecorated(false);
-        
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        add(corepanel);
-
-        this.setSize(900,640);
-        this.setMinimumSize(new Dimension(900,640));
-
-        corepanel.setDimension(getWidth(), getHeight());
-        
-        final int sidebarWidth = (getWidth()/100) * 25;
-        overlaypanel.setBounds(sidebarWidth, 0, getWidth() - sidebarWidth , getHeight());
-        
-        corepanel.add(cbar);
-        corepanel.add(overlaypanel);
+        canvas.add(overlay);
      
         this.getRootPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                // force update the dimensions so panel can update graphics
-                overlaypanel.setBounds(sidebarWidth, 0, getWidth() - sidebarWidth , getHeight());
-                corepanel.setBounds(0, 0, getWidth(), getHeight());
-                
-                LayoutAdapter.reflow();
+                java.awt.Component component = e.getComponent();
+                cproperties.bound(0, 0, component.getWidth(), component.getHeight());
             }
             
         });
         
-        System.out.println("Frame Initialized");
+        Log.Out("Frame Initialized");
 
         initComponents();
        
@@ -138,20 +115,20 @@ public class Home extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Home.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Home.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Home.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Home.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Window.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
         /* Create and display the form */
         TaskController.runAfter(()->{
-            Home application = new Home();
-            application.setVisible(true);
+            Window applicationWindow = new Window();
+            applicationWindow.setVisible(true);
         });
     }
 

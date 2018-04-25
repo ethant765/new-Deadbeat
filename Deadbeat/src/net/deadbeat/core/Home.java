@@ -17,7 +17,7 @@ import net.deadbeat.ui.CoreBar;
 import static net.deadbeat.core.LayoutAdapter.cbar;
 
 // uses jar
-import net.deadbeat.utility.JSONAdapter;
+import net.deadbeat.json.JSONAdapter;
 import net.deadbeat.utility.Log;
 
 /**

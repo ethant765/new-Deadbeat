@@ -13,7 +13,7 @@ import javax.swing.SwingUtilities;
  */
 public class TaskController {
     
-    public static void runAfter(Task task,int delay_ms){
+    public static void runAfter(ITask task,int delay_ms){
         new java.util.Timer().schedule(
             new java.util.TimerTask() {
                 @Override
