@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.geom.RoundRectangle2D;
 import javax.swing.JFrame;
+import net.deadbeat.core.EventAdapter;
 
 import net.deadbeat.elements.Image;
 import net.deadbeat.elements.Button;
@@ -82,39 +83,48 @@ public class LayoutAdapter {
     public static void SetUp(){
         
         win.badge = new Image("logo.png");
+        win.deco = new Image("Waves.png");
         win.tbar = new TitleBar(win);
+            
         
         win.overlay.add(win.searchbox);
+        win.overlay.add(win.conversation);
         
-        win.overlay.On(EName.MOUSE_CLICK, (results) -> {
-            Log.Out("los");
-            win.searchbox.loseFocus();
+        win.conversation.setVisibility(true);
+        
+        win.overlay.On(EName.MOUSE_UP, (results) -> {
+            EventAdapter.Trigger("global::mouse_click");
+        });
+        
+        win.canvas.On(EName.MOUSE_UP, (results) -> {
+            EventAdapter.Trigger("global::mouse_click");
         });
         
         win.searchbox.setPosition(0, 0);
+        win.conversation.setPosition(0,0);
         
-            closeBtn = new Button();
-            minBtn = new Button();
-            maxBtn = new Button();
-            
-            closeBtn.On(EName.MOUSE_UP, (results) -> {
-                System.exit(0);
-            });
-            
-            minBtn.On(EName.MOUSE_UP, (results) -> {
-                win.setState(JFrame.ICONIFIED);
-            });
-            
-            maxBtn.On(EName.MOUSE_UP, (results) -> {
-                if ( win.getExtendedState() == JFrame.MAXIMIZED_BOTH ){
-                    win.setExtendedState(JFrame.NORMAL);
-                }
-                else{
-                    win.setExtendedState(JFrame.MAXIMIZED_BOTH);
-                }
-                win.paintAll(win.getGraphics());
-                Update();
-            });
+        closeBtn = new Button();
+        minBtn = new Button();
+        maxBtn = new Button();
+
+        closeBtn.On(EName.MOUSE_UP, (results) -> {
+            System.exit(0);
+        });
+
+        minBtn.On(EName.MOUSE_UP, (results) -> {
+            win.setState(JFrame.ICONIFIED);
+        });
+
+        maxBtn.On(EName.MOUSE_UP, (results) -> {
+            if ( win.getExtendedState() == JFrame.MAXIMIZED_BOTH ){
+                win.setExtendedState(JFrame.NORMAL);
+            }
+            else{
+                win.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
+            win.paintAll(win.getGraphics());
+            Update();
+        });
             
         
     }
@@ -122,7 +132,7 @@ public class LayoutAdapter {
     public static void Update(){
         final int sidebarWidth = (win.getWidth()/100) * 25;
         
-        win.conversation.setBound(50, 50,300, 300);
+        win.conversation.setBound( win.overlay.getWidth() - (sidebarWidth + 10) , win.getHeight() - 290 ,sidebarWidth, 300);
         
         win.setShape(new RoundRectangle2D.Double(0, 0, win.getWidth(), win.getHeight(), 6, 6));
         
@@ -133,6 +143,10 @@ public class LayoutAdapter {
         int logoHeight = (int) ( (sidebarWidth - 32) / 1.85 );
         win.badge.setBounds(14, 20, sidebarWidth - 32 , logoHeight );
         win.badge.repaintIn( win.canvas );
+        
+        int decoHeight = (int) ( (sidebarWidth) / 1.81 );
+        win.deco.setBounds(-1 , win.getHeight() - decoHeight , sidebarWidth + 40, decoHeight );
+        win.deco.repaintIn(win.canvas);
         
         win.tbar.setBounds(0,0,win.getWidth(),CBAR_HEIGHT);
                 
@@ -162,6 +176,16 @@ public class LayoutAdapter {
                 CBAR_DIAMETER,
                 CBAR_DIAMETER
         );
+        
+        EventAdapter.On("global::resize", (results) -> {
+        
+            win.conversation.resize();
+            win.repaint();
+            win.conversation.reflow();
+            
+            Log.Out("x",win.conversation.getLocation().x, win.overlay.getWidth() );
+            
+        },true);
         
         // Searchbox
         win.searchbox.setAlignmentX(0f);

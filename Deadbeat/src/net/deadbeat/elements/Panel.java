@@ -34,7 +34,7 @@ public class Panel extends Component {
     
     public Color borderActive = Color.WHITE;
     public Color borderInactive = Color.LIGHT_GRAY;
-    public Color background = Color.GRAY;
+    public Color background = new Color(114, 104, 176);
 
     @Override
     public void whenReady() {

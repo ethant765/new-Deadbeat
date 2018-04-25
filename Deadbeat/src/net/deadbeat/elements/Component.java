@@ -145,6 +145,7 @@ public abstract class Component extends JComponent{
     }
     
     public void setBound(int x, int y, int w, int h){
+        setPreferredSize( new Dimension(w,h) );
         setPosition(x,y);
         setDimension(w,h);
         reflow();

@@ -10,12 +10,12 @@ import net.deadbeat.elements.Overlay;
 import net.deadbeat.layout.RawLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import net.deadbeat.core.EventAdapter;
 
 import net.deadbeat.core.TaskController;
 import net.deadbeat.elements.ConversationPanel;
 import net.deadbeat.elements.Image;
 import net.deadbeat.elements.RoundedTextbox;
-import net.deadbeat.elements.Textbox;
 import net.deadbeat.elements.TitleBar;
 
 
@@ -44,6 +44,7 @@ public class Window extends javax.swing.JFrame {
     public Canvas canvas;
     public Overlay overlay;
     public Image badge;
+    public Image deco;
     public TitleBar tbar;
     
     public ConversationPanel conversation;
@@ -80,17 +81,28 @@ public class Window extends javax.swing.JFrame {
             public void componentResized(ComponentEvent e) {
                 java.awt.Component component = e.getComponent();
                 cproperties.bound(0, 0, component.getWidth(), component.getHeight());
-                conversation.resize();
+                TaskController.runAfter(() -> {
+                    conversation.resize();
+                    EventAdapter.Trigger("global::resize");
+                });
             }
             
         });
         
         LayoutAdapter.Update();
         
-        Log.Out("Frame Initialized");
 
         initComponents();
+        
+        EventAdapter.On("global::mouse_click", (results) -> {
+            searchbox.loseFocus();
+            conversation.messageBox.loseFocus();
+            
+            searchbox.reflow();
+            conversation.messageBox.reflow();
+        });
        
+        Log.Out("Frame Initialized" , EventAdapter.globalEvents);
     }
  
     public int getContainerWidth(){
