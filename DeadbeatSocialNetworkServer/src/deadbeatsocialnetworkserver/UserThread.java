@@ -49,7 +49,9 @@ public class UserThread implements Runnable{
     public UserThread(DataHeader headers){
         this.headers = headers;
     }
-    
+    private void test(){
+
+    }
     public void run(){
         //get the data sent from the user to use in this thread
         byte[] data = new byte[1024];
@@ -128,6 +130,9 @@ public class UserThread implements Runnable{
             socket.send(sendPacket);
             
         }catch(Exception e){Log.Throw(e);}
+        
+        //finally call the function which removes the users IP address from the GUI
+        DeadbeatSocialNetworkServer.sinterface.removeUserIP("Client connected on IP: " + userIP);
     }
     
     //if there is an error performing an operation, send user a message expressing this error
