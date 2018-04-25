@@ -14,7 +14,7 @@ public enum DataHeader {
     //AND EVERY OPERATION WILL RETURN A 'STATUS' (true/false) - TO THE CLIENT
     
     //function: handles new user creation then passes to logon to log new user on
-    //Data Needed: USERNAME, PASSWORD, PROFILE_IMAGE, DOB, PLACE_OF_BIRTH,
+    //Data Needed: USERNAME, PASSWORD, PROFILE_IMAGE, DOB, PLACE_OF_BIRTH, MUSIC_TYPE_ID
     //Data returned: USER_ID, OTHER_LOGIN_INFO
     LOGIN_NEW_USER,
     

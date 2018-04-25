@@ -22,16 +22,19 @@ import net.deadbeat.utility.*;
 //Thread class which is resposible for each client connected to the server
 public class UserThread implements Runnable{
     
+    //initalise requried functions for use throughout the class
     DataHeader headers;
     DBInteractions dataChange = new DBInteractions();
     
+    //class required variab;es
     DatagramSocket socket;
     DatagramPacket packet;
     InetAddress userIP;
     int userPort;
     int clientUsersID; //set based on IPaddress when that is stored for active users table
-    boolean opSuccsess;
+    boolean opSuccess;
     
+    //constructor
     UserThread(DatagramSocket sok, DatagramPacket pak){
         socket = sok;
         packet = pak;
@@ -50,7 +53,7 @@ public class UserThread implements Runnable{
             }
         }catch(Exception e){Log.Throw(e);}
         
-        opSuccsess = true; // default to true and chenge to false later if an error occured during an operation
+        opSuccess = true; // default to true and chenge to false later if an error occured during an operation
     }
     
     public UserThread(DataHeader headers){
@@ -103,7 +106,7 @@ public class UserThread implements Runnable{
         try{
             
             //add status header onto the json string to send to client
-            sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccsess), Tokenizer.TokenType.BOOLEAN ) );
+            sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccess), Tokenizer.TokenType.BOOLEAN ) );
             //convert json object to string then string to bytes ready to send to client
             String message = sendData.toString();
             
@@ -118,7 +121,7 @@ public class UserThread implements Runnable{
     //if there is an error performing an operation, send user a message expressing this error
     private void ErrorToUser(boolean success){
         //if function is called with a boolean false - then error has occured and change error boolean at top of class to false
-        opSuccsess = success;
+        opSuccess = success;
     }
     
     
@@ -151,7 +154,12 @@ public class UserThread implements Runnable{
                 String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage, Password)";
                 String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', " + imageFile + ", '" + Password + "')";
                 dataChange.InsertRecord(tableName, tableCols, Values);
-
+                
+                
+                //add users music preference type
+                 addMusicPreferences(obj);
+                 
+                
                 //get user id in result set to send back to client
                 String ReturnID = "User_ID";
                 //use same table as insert operation above
@@ -233,20 +241,14 @@ public class UserThread implements Runnable{
             //create a result set list to use when creating a json string of it
             List<ResultSet> resultsHolder = new ArrayList<>();
             
-            //add the users passed data result set into the list
+            //add all the collated resultSets into a list to send them as 1 to the client
+            //call all the function required for a new user sign in
             resultsHolder.add(userData);
-            
-            //add the users friends list to the resultSet list
             resultsHolder.add(FriendsList());
-
-            //send list of recieved but not accepted/rejected friend requests
             resultsHolder.add(updateFriendRequests());
-
-            //send list of messageboard items - ResultSet updateMessageBoard()
             resultsHolder.add(updateMessageBoard());
-
-            //create list of active users and send to clinet - ResultSet updateActiveUsers(int userID)
             resultsHolder.add(updateActiveUsers());
+            
             
             //add the users IP address to the active members table
             addIP(obj.get(0).get("USER_ID").get());
@@ -474,52 +476,6 @@ public class UserThread implements Runnable{
         return dataChange.GetCustomRecord(sqlCmd);
     }
     
-    //removes the specified song from the server for the client
-    private void removeSong(JSONAdapter obj){
-        int songID = obj.get(0).get("SONG_ID").get();
-        
-        //test to ensure that there is a song with that ID first
-        String songTable = "SharedSongs";
-        String whereTest = "SharedSongs_ID = " + songID;
-        if(dataChange.GetRecord("*", songTable, whereTest) == null){ //if no song to begin with there has been an error somewhere
-            ErrorToUser(false);
-        }
-        else{
-            //remove song form song table, and profileSongTable
-            String ProfileSongTable = "ProfileSharedSongs";
-            String whereProfileSong = "SharedSong_ID = " + songID;
-            dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
-            String whereSong = "SharedSongs_ID = " + songID;
-            dataChange.DeleteRecord(songTable, whereSong);
-            
-            //test that the database deletes have performed correctly
-            ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
-            ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
-            
-            if(songResult != null || profileSongResult != null)//if either return data there has been a deleting error
-                ErrorToUser(false);
-        }
-    }
-    
-    //removes the specified message from the message board for the client
-    private void removeMessage(JSONAdapter obj){
-        int userID = clientUsersID;
-        String title = obj.get(0).get("MESSAGE_TITLE").get();
-        
-        //test to ensure there is a message with the current title by that user
-        String tableName = "MessageBoard";
-        String where = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
-        if(dataChange.GetRecord("*", tableName, where) == null) //if there is no result then message doesn't exist
-            ErrorToUser(false);
-        else{
-            dataChange.DeleteRecord(tableName, where);//delete table
-            
-            //test to ensure deletion successful
-            if(dataChange.GetRecord("*", tableName, where) != null) //if deleted should be no result
-                ErrorToUser(false);
-        }
-    }
-    
         //adds the users music preferences to their account
     private void addMusicPreferences(JSONAdapter obj){
         String preferenceID = obj.get(0).get("MUSIC_TYPE_ID").get();
@@ -545,7 +501,56 @@ public class UserThread implements Runnable{
                 ErrorToUser(false);
         }
     }
+        
+    //removes the specified message from the message board for the client
+    private void removeMessage(JSONAdapter obj){
+        int userID = clientUsersID;
+        String title = obj.get(0).get("MESSAGE_TITLE").get();
+        
+        //test to ensure there is a message with the current title by that user
+        String tableName = "MessageBoard";
+        String where = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
+        if(dataChange.GetRecord("*", tableName, where) == null) //if there is no result then message doesn't exist
+            ErrorToUser(false);
+        else{
+            dataChange.DeleteRecord(tableName, where);//delete table
+            
+            //test to ensure deletion successful
+            if(dataChange.GetRecord("*", tableName, where) != null) //if deleted should be no result
+                ErrorToUser(false);
+        }
+    }
     
+    
+    
+    //----------------------------------------functions which remove user data from the database---------------------------------------------------
+    
+        //removes the specified song from the server for the client
+    private void removeSong(JSONAdapter obj){
+        int songID = obj.get(0).get("SONG_ID").get();
+        
+        //test to ensure that there is a song with that ID first
+        String songTable = "SharedSongs";
+        String whereTest = "SharedSongs_ID = " + songID;
+        if(dataChange.GetRecord("*", songTable, whereTest) == null){ //if no song to begin with there has been an error somewhere
+            ErrorToUser(false);
+        }
+        else{
+            //remove song form song table, and profileSongTable
+            String ProfileSongTable = "ProfileSharedSongs";
+            String whereProfileSong = "SharedSong_ID = " + songID;
+            dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
+            String whereSong = "SharedSongs_ID = " + songID;
+            dataChange.DeleteRecord(songTable, whereSong);
+            
+            //test that the database deletes have performed correctly
+            ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
+            ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
+            
+            if(songResult != null || profileSongResult != null)//if either return data there has been a deleting error
+                ErrorToUser(false);
+        }
+    }
     
     //removes/deletes the user account - removing all their data with them
     private void removeUser(){

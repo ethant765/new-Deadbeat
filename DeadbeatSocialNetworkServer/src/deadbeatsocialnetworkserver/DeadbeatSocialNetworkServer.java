@@ -33,8 +33,7 @@ public class DeadbeatSocialNetworkServer {
             while(true){
                 System.out.println("Waiting for a client...");
                 
-                //initial data recieved here should be a boolean
-                //true fro existingUser, false for newUser
+                //recieves the data sent by the client and sends it through to the new thread for processing
                 DatagramPacket recieveData = new DatagramPacket(data, data.length);
                 serverSocket.receive(recieveData);
                 
@@ -43,8 +42,6 @@ public class DeadbeatSocialNetworkServer {
                 newClient.start();
             }
             
-        }catch(IOException e){
-            Log.Throw(e);
-        }
+        }catch(IOException e){Log.Throw(e);}
     }
 }
