@@ -6,16 +6,12 @@
 package net.deadbeat.elements;
 
 import java.awt.Container;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
-import net.deadbeat.ui.CoreImage;
-import static net.deadbeat.ui.CoreImage.resizeImage;
-import net.deadbeat.ui.CorePanel;
 import net.deadbeat.utility.Log;
 
 /**
@@ -39,6 +35,16 @@ public class Image extends JLabel{
         if ( this.getParent() != container ) container.add(this);
         ImageIcon imageIcon = new ImageIcon(resizeImage(img, this.getWidth(), this.getHeight()));
         this.setIcon( imageIcon );
+    }
+    
+    public static java.awt.Image resizeImage(java.awt.Image img , int w , int h)
+    {
+        BufferedImage resizedimage = new BufferedImage(w,h,BufferedImage.TRANSLUCENT);
+        Graphics2D g2 = resizedimage.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2.drawImage(img, 0, 0,w,h,null);
+        g2.dispose();
+        return resizedimage;
     }
     
 }

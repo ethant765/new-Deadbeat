@@ -6,6 +6,7 @@
 package net.deadbeat.elements;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
@@ -15,7 +16,6 @@ import java.awt.RenderingHints;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import net.deadbeat.core.TaskController;
 import net.deadbeat.schedule.EName;
 import net.deadbeat.utility.Log;
 
@@ -31,16 +31,9 @@ public class Textbox extends Component{
     public int pointerPosition = 0;
     public int selectionLength = 0;
     
-    public Boolean focused = false;
     public Boolean mouseOver = false;
     
     public Textbox(){
-        super();
-        TaskController.runAfter(() -> {
-//            setOpaque(false);
-            
-            whenReady();
-        });
     }
 
     @Override
@@ -48,14 +41,20 @@ public class Textbox extends Component{
         Log.Out("Textbox Ready");
         
         On(EName.MOUSE_DOWN, (results) -> {
-            handleClick((MouseEvent)results[0]);
-            this.repaint();
+            this.gainFocus();
+            this.reflow();
         });
         
         On(EName.MOUSE_CLICK, (results) -> {
-            this.gainFocus();
+            MouseEvent e = (MouseEvent)results[0];
+            handleClick(e);
+            e.consume();
+            this.reflow();
         });
         
+        On(EName.MOUSE_HOVER, (results)->{
+            this.setCursor( Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR) );
+        });
         
         this.On(EName.KEY_TYPED, (results) -> {
             KeyEvent e = (KeyEvent)results[0];
@@ -197,7 +196,7 @@ public class Textbox extends Component{
             this.selectionLength = this.selectionLength * -1;
             // invert if opposite
         }
-        this.repaint();
+        this.reflow();
     }
     
     private void moveCaret(int moves){

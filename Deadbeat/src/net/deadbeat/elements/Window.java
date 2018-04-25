@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.deadbeat.beta;
+package net.deadbeat.elements;
 
 import net.deadbeat.elements.Canvas;
 import net.deadbeat.elements.Overlay;
@@ -12,7 +12,10 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 
 import net.deadbeat.core.TaskController;
+import net.deadbeat.elements.ConversationPanel;
 import net.deadbeat.elements.Image;
+import net.deadbeat.elements.RoundedTextbox;
+import net.deadbeat.elements.Textbox;
 import net.deadbeat.elements.TitleBar;
 
 
@@ -43,6 +46,10 @@ public class Window extends javax.swing.JFrame {
     public Image badge;
     public TitleBar tbar;
     
+    public ConversationPanel conversation;
+    
+    public RoundedTextbox searchbox;
+    
     private void initFrames(){
         
         LayoutAdapter.CustomProperty cproperties = LayoutAdapter.setProperty(this);
@@ -52,6 +59,8 @@ public class Window extends javax.swing.JFrame {
         // Create the main panels
         canvas = new Canvas();
         overlay = new Overlay();
+        searchbox = new RoundedTextbox();
+        conversation = new ConversationPanel();
         
         add(canvas);
         
@@ -62,11 +71,16 @@ public class Window extends javax.swing.JFrame {
         canvas.add(tbar);
         canvas.add(overlay);
         
+        overlay.add(conversation);
+            
+        conversation.setVisibility(true);
+        
         this.getRootPane().addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
                 java.awt.Component component = e.getComponent();
                 cproperties.bound(0, 0, component.getWidth(), component.getHeight());
+                conversation.resize();
             }
             
         });

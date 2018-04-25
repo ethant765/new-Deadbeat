@@ -8,7 +8,6 @@ package net.deadbeat.elements;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import net.deadbeat.beta.Window;
 import net.deadbeat.core.TaskController;
 import net.deadbeat.schedule.EName;
 

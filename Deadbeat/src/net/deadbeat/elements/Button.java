@@ -5,6 +5,7 @@
  */
 package net.deadbeat.elements;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -25,13 +26,18 @@ public class Button extends Component {
     }
 
     public Color color = Color.white;
-    public Color activeColor = Color.gray;
     public States currentState = States.DEFAULT;
+    //public Color borderColor = new Color( Color.BLACK. );
     
     @Override
     public void whenReady() {
         On(EName.MOUSE_DOWN, (results) -> {
             currentState = States.DOWN;
+            reflow();
+        });
+        
+        On(EName.MOUSE_HOVER,(results) -> {
+            currentState = States.HOVER;
             reflow();
         });
         
@@ -62,19 +68,25 @@ public class Button extends Component {
       
         switch (currentState){
             case DOWN:
-                g.setColor(this.activeColor);
+                g.setColor(this.color.darker());
                 break;
             default:
                 g.setColor(this.color);
         }
         
-        g.fillOval(0, 0, getSize().width-1, getSize().height-1);
+        g2.setStroke(new BasicStroke(1));
+        g2.fillOval(0, 0, getSize().width, getSize().height);
+        
+        if ( currentState == States.HOVER ){
+            g2.setColor(this.color.brighter());
+            g2.fillOval(4, 4, getSize().width - 8, getSize().height - 8);
+//            g2.drawOval(1, 1, getSize().width - 3, getSize().height - 3);
+        }
       
     }
     
-    public void setColor(Color defaultColor, Color activeColor){
+    public void setColor(Color defaultColor){
         this.color = defaultColor;
-        this.activeColor = activeColor;
         reflow();
     }
 }

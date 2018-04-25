@@ -144,7 +144,13 @@ public abstract class Component extends JComponent{
         
     }
     
-    public final void setPosition(int x, int y){
+    public void setBound(int x, int y, int w, int h){
+        setPosition(x,y);
+        setDimension(w,h);
+        reflow();
+    }
+    
+    public void setPosition(int x, int y){
         this.x = x;
         this.y = y;
     }

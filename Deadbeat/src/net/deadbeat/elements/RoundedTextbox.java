@@ -19,8 +19,6 @@ import java.awt.RenderingHints;
 public class RoundedTextbox extends Textbox{
     
     public RoundedTextbox(){
-            super();
-            whenReady();
     }
 
     @Override
@@ -31,7 +29,7 @@ public class RoundedTextbox extends Textbox{
         
         graphics.setPaintMode();
         
-        if (this.focused){
+        if (focused){
             graphics.setColor(Color.white);
         }
         else{
@@ -50,7 +48,7 @@ public class RoundedTextbox extends Textbox{
             graphics.drawString(this.value, 8, getHeight() - 7);
         }
         
-        if (this.focused){
+        if (focused){
             FontMetrics fm = graphics.getFontMetrics();
             int lenToCaret = 8;
             for (int i = 0; i < this.pointerPosition; i++){

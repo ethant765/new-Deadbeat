@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package net.deadbeat.beta;
+package net.deadbeat.elements;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -12,10 +12,10 @@ import java.awt.geom.RoundRectangle2D;
 import javax.swing.JFrame;
 
 import net.deadbeat.elements.Image;
-import net.deadbeat.elements.RoundedTextbox;
 import net.deadbeat.elements.Button;
 import net.deadbeat.elements.TitleBar;
 import net.deadbeat.schedule.EName;
+import net.deadbeat.utility.Log;
 
 /**
  *
@@ -69,7 +69,6 @@ public class LayoutAdapter {
         return (new CustomProperty(container));
     }
     
-    public static RoundedTextbox searchbox;
     public static Window win;
     
     public static Button closeBtn;
@@ -83,30 +82,30 @@ public class LayoutAdapter {
     public static void SetUp(){
         
         win.badge = new Image("logo.png");
-        searchbox = new RoundedTextbox();
         win.tbar = new TitleBar(win);
         
-        win.overlay.add(searchbox);
+        win.overlay.add(win.searchbox);
         
         win.overlay.On(EName.MOUSE_CLICK, (results) -> {
-            searchbox.loseFocus();
+            Log.Out("los");
+            win.searchbox.loseFocus();
         });
         
-        searchbox.setPosition(0, 0);
+        win.searchbox.setPosition(0, 0);
         
             closeBtn = new Button();
             minBtn = new Button();
             maxBtn = new Button();
             
-            closeBtn.On(EName.MOUSE_CLICK, (results) -> {
+            closeBtn.On(EName.MOUSE_UP, (results) -> {
                 System.exit(0);
             });
             
-            minBtn.On(EName.MOUSE_CLICK, (results) -> {
+            minBtn.On(EName.MOUSE_UP, (results) -> {
                 win.setState(JFrame.ICONIFIED);
             });
             
-            maxBtn.On(EName.MOUSE_CLICK, (results) -> {
+            maxBtn.On(EName.MOUSE_UP, (results) -> {
                 if ( win.getExtendedState() == JFrame.MAXIMIZED_BOTH ){
                     win.setExtendedState(JFrame.NORMAL);
                 }
@@ -114,6 +113,7 @@ public class LayoutAdapter {
                     win.setExtendedState(JFrame.MAXIMIZED_BOTH);
                 }
                 win.paintAll(win.getGraphics());
+                Update();
             });
             
         
@@ -121,6 +121,8 @@ public class LayoutAdapter {
     
     public static void Update(){
         final int sidebarWidth = (win.getWidth()/100) * 25;
+        
+        win.conversation.setBound(50, 50,300, 300);
         
         win.setShape(new RoundRectangle2D.Double(0, 0, win.getWidth(), win.getHeight(), 6, 6));
         
@@ -130,7 +132,7 @@ public class LayoutAdapter {
         
         int logoHeight = (int) ( (sidebarWidth - 32) / 1.85 );
         win.badge.setBounds(14, 20, sidebarWidth - 32 , logoHeight );
-        win.badge.repaintIn( win );
+        win.badge.repaintIn( win.canvas );
         
         win.tbar.setBounds(0,0,win.getWidth(),CBAR_HEIGHT);
                 
@@ -138,9 +140,9 @@ public class LayoutAdapter {
         win.tbar.add(minBtn);
         win.tbar.add(maxBtn);
         
-        closeBtn.setColor(new Color(244, 67, 54), new Color(198, 40, 40));
-        minBtn.setColor(new Color(255, 193, 7), new Color(255, 143, 0));
-        maxBtn.setColor(new Color(76, 175, 80), new Color(46, 125, 50));
+        closeBtn.setColor(new Color(244, 67, 54));
+        minBtn.setColor(new Color(255, 193, 7));
+        maxBtn.setColor(new Color(76, 175, 80));
 
         closeBtn.setBounds(
                 CBAR_GAP,
@@ -162,14 +164,14 @@ public class LayoutAdapter {
         );
         
         // Searchbox
-        searchbox.setAlignmentX(0f);
-        searchbox.setAlignmentY(0f);
+        win.searchbox.setAlignmentX(0f);
+        win.searchbox.setAlignmentY(0f);
         
-        searchbox.setText("");
-        searchbox.setPreferredSize(new Dimension(150 ,24));
-        searchbox.setBounds( ( win.getWidth() - sidebarWidth ) - ( 162 ) ,11,150, 24);
-        searchbox.setFocusable(true);
-        searchbox.setPlaceholder("Search");
+        win.searchbox.setText("");
+        win.searchbox.setPreferredSize(new Dimension(150 ,24));
+        win.searchbox.setBounds( ( win.getWidth() - sidebarWidth ) - ( 162 ) ,11,150, 24);
+        win.searchbox.setFocusable(true);
+        win.searchbox.setPlaceholder("Search");
     }
     
 }
