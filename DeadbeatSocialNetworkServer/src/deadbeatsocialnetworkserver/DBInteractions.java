@@ -66,6 +66,7 @@ public class DBInteractions {
                 res = stmt.executeQuery(SQLQuery);
             }
             else{
+                Log.Out(SQLQuery);
                 stmt.executeUpdate(SQLQuery);
             }
         }catch(Exception e){Log.Throw(e);}

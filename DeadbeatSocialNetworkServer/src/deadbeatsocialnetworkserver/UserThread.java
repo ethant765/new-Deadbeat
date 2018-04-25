@@ -44,13 +44,13 @@ public class UserThread implements Runnable{
         userPort = pak.getPort();
         
         //test for active user - if they are set their UserID, otherwise this will be set during their login process
-        String table = "members";
+        String table = "Members";
         String select = "User_ID";
         String condition = "IPAddress = '" + userIP.toString().substring(1) + "'";
         ResultSet rs = dataChange.GetRecord(select, table, condition);
         
         try{
-            if(rs != null){
+            if(rs.next()){
                 clientUsersID = rs.getInt("User_ID");
             }
         }catch(Exception e){Log.Throw(e);}
@@ -63,13 +63,15 @@ public class UserThread implements Runnable{
     }
     
     public void run(){
-        //get the data sent from the user on their connection to the server
+        //get the data sent from the user to use in this thread
         byte[] data = new byte[1024];
         data = packet.getData();
-        String Message = new String(data); //add square brackets to help compatability with JSON class
+        String Message = new String(data); 
 
+        //create a jsonObject from the string sent by the client
+        //that allows for the raw infromation to be retreived from the sent JSON string
         JSONAdapter recievedObject = new JSONAdapter();
-        recievedObject.fromString(Message);//create a jsonObject from the string sent by the client
+        recievedObject.fromString(Message);
         String header = recievedObject.get(0).get("HEADER").get();
                 
         //create the JSONobject which will be used to return data
@@ -108,7 +110,13 @@ public class UserThread implements Runnable{
         try{
             
             //add status header onto the json string to send to client
-            sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccess), Tokenizer.TokenType.BOOLEAN ) );
+            
+            
+            //ERROR
+            //sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccess), Tokenizer.TokenType.BOOLEAN ) );
+            
+            
+            
             //convert json object to string then string to bytes ready to send to client
             String message = sendData.toString();
             
@@ -126,7 +134,9 @@ public class UserThread implements Runnable{
         opSuccess = success;
     }
     
-    
+    private void addUserIDfromIP(){
+        
+    }
     
     
     //-----------------------------login and log off functions---------------------------------
@@ -139,7 +149,7 @@ public class UserThread implements Runnable{
             String ErrorTable = "Profiles";
             String ErrorSelect = "*";
             String ErrorWhere = "UserName = '" + obj.get(0).get("USERNAME").get() + "'";
-            if(dataChange.GetRecord(ErrorSelect, ErrorTable, ErrorWhere) != null){//test to see if username surplied has been taken
+            if(dataChange.GetRecord(ErrorSelect, ErrorTable, ErrorWhere).next()){//test to see if username surplied has been taken
                 ErrorToUser(false);
             }
             else{
@@ -148,19 +158,22 @@ public class UserThread implements Runnable{
                 String userName = obj.get(0).get("USERNAME").get();
                 String PlaceOfBirth = obj.get(0).get("PLACE_OF_BIRTH").get();
                 Date DOB = new SimpleDateFormat("yyyy/MM/dd").parse(obj.get(0).get("DOB").get());
-                Object imageFile = BinResource.lookup(obj.get(0).get("PROFILE_IMAGE").get()); 
+                
+                
+                //Object imageFile = BinResource.lookup(obj.get(0).get("PROFILE_IMAGE").get()); 
+                
+                
                 String Password = obj.get(0).get("PASSWORD").get();
 
                 //insert the data into the database for the user
                 String tableName = "Profiles";
-                String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, ProfileImage, Password)";
-                String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', " + imageFile + ", '" + Password + "')";
+                String tableCols = "(user_ID, UserName, PlaceOfBirth, DOB, Password)";
+                String Values = "(" + id + ", '" + userName + "', '" + PlaceOfBirth + "', '" + DOB + "', '" + Password + "')";
                 dataChange.InsertRecord(tableName, tableCols, Values);
                 
                 
                 //add users music preference type
                  addMusicPreferences(obj);
-                 
                 
                 //get user id in result set to send back to client
                 String ReturnID = "User_ID";
@@ -183,7 +196,7 @@ public class UserThread implements Runnable{
                 testIDselect = "User_ID";
                 testIDtable = "Profiles";
                 testIDwhere = "User_ID = " + newUserID;//test for an existing ID
-            }while(dataChange.GetRecord(testIDselect, testIDtable, testIDwhere) != null);
+            }while(dataChange.GetRecord(testIDselect, testIDtable, testIDwhere).next());
         }catch(Exception e){Log.Throw(e);}
         //return the unique ID
         return newUserID;
@@ -194,20 +207,19 @@ public class UserThread implements Runnable{
    //adds IPaddress to active users table in DB
     private void returningUser(JSONAdapter obj){
          try{
-            String IDval = "User_ID";
-            String IDtable = "Profiles";
-            String IDcondition = "UserName = '" + obj.get(0).get("USERNAME").get() + "'";
-            ResultSet idResult = dataChange.GetRecord(IDval, IDtable, IDcondition);
-            int ID = idResult.getInt("User_ID");
-
             //get resultset of userName data from the databse
             String value = "*";
             String table = "Profiles";
-            String Condition = "UserName = " + obj.get(0).get("USERNAME").get() + "' AND Password = " + Security.hash(obj.get(0).get("PASSWORD").get());//getHash(obj.getJSON().getString("PASSWORD"));
+            String Condition = "UserName = " + obj.get(0).get("USERNAME").get() + "' AND Password = " + Security.hash(obj.get(0).get("PASSWORD").get());
             ResultSet result = dataChange.GetRecord(value, table, Condition);
-       
+            
+            while(result.next()){
+                String user = result.getString("UserName");
+                System.out.println(user);
+            }
+            
             //if result isn't null then it must have found a user, and their password has matched
-            if(result != null){
+            if(result.next()){
                 //call function which handles sending remaining login info
                 loginInfoSend(obj, result); //will send the client all their required info
             }
@@ -228,10 +240,12 @@ public class UserThread implements Runnable{
         //after data is entered into the database check to endure it has been added correctly
         String select = "*";
         String where = "IPAddress = " + userIP;
-        if(dataChange.GetRecord(select, insertInto, where) == null) //if null data has not entered into the database correctly
-            ErrorToUser(false);
-        else
-            clientUsersID = ID; //data is entered properly so store the users IP
+        try{
+            if(!dataChange.GetRecord(select, insertInto, where).next()) //if null data has not entered into the database correctly
+                ErrorToUser(false);
+            else
+                clientUsersID = ID; //data is entered properly so store the users IP
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //when a new user creates an accout or an exisint user signs in, this is info relayed back to client
@@ -305,7 +319,7 @@ public class UserThread implements Runnable{
             String selectTest = "*";
             String fromTest = "SharedSongs, ProfileSharedSongs";
             String whereTest = "SharedSongs.SharedSongs_ID = " + songID + ", ProfileSharedSongs.SharedSong_ID = " + songID;
-            if(dataChange.GetRecord(selectTest, fromTest, whereTest) == null) //if it = null then error has occured
+            if(!dataChange.GetRecord(selectTest, fromTest, whereTest).next()) //if it = null then error has occured
                 ErrorToUser(false);//fasle = operation failed
             
         } catch(Exception e){Log.Throw(e);}
@@ -321,7 +335,7 @@ public class UserThread implements Runnable{
                 fromID = "SharedSongs";
                 whereID = "SharedSongs_ID = " + newID;
                 newID++;
-            }while(dataChange.GetRecord(selectID, fromID, whereID) != null);
+            }while(dataChange.GetRecord(selectID, fromID, whereID).next());
             
         }catch(Exception e){Log.Throw(e);}
         return newID;
@@ -335,22 +349,24 @@ public class UserThread implements Runnable{
         
         String table = "Friends";
         String where = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID;
-        //test to ensure they havn't already been added to the friends table together
-        if(dataChange.GetRecord("*", table, where) != null){ //if it isn't null the two users have been added together on this table before
-            ErrorToUser(false);
-        }
-        else{
-            
-            String cols = "(User_ID, Friend_ID, Status_ID)";
-            String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
-            dataChange.InsertRecord(table, cols, vals);
+        try{
+            //test to ensure they havn't already been added to the friends table together
+            if(dataChange.GetRecord("*", table, where) .next()){ //if it isn't null the two users have been added together on this table before
+                ErrorToUser(false);
+            }
+            else{
 
-            //test to ensure that the friend request is sent
-            String select = "*";
-            String whereTest = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID + " AND Status_ID = 'wait'";
-            if(dataChange.GetRecord(select, table, whereTest) == null)//error occured during insert opperation
-                ErrorToUser(false); //ensure user is sent status with error
-        }
+                String cols = "(User_ID, Friend_ID, Status_ID)";
+                String vals = "(" + clientUserID + ", " + otherUsersID + ", 'Wait')";
+                dataChange.InsertRecord(table, cols, vals);
+
+                //test to ensure that the friend request is sent
+                String select = "*";
+                String whereTest = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID + " AND Status_ID = 'wait'";
+                if(!dataChange.GetRecord(select, table, whereTest).next())//error occured during insert opperation
+                    ErrorToUser(false); //ensure user is sent status with error
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
     
     
@@ -373,8 +389,11 @@ public class UserThread implements Runnable{
         
         //test that the data has been updated
         String where = "User_ID = " + clientUserID + " AND Friend_ID = " + FriendRequestUserID + " AND Status_ID = '" + newStatus + "'";
-        if(dataChange.GetRecord("*", table, where) == null)//if null error has occured somewhere in the sql data update
+        
+        try{
+        if(!dataChange.GetRecord("*", table, where).next())//if null error has occured somewhere in the sql data update
             ErrorToUser(false);
+        }catch(Exception e){Log.Throw(e);}
     }
         
     //adds the users message to the message board for their friends to see
@@ -386,21 +405,23 @@ public class UserThread implements Runnable{
         String table = "MessageBoard";
         String TestWhere = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
         
-        //test to ensure that the currernt user hasn't already got a message with that title
-        //this is as the title & userID are used as a joint PK
-        if(dataChange.GetRecord("*", table, TestWhere) != null){ //if not null then already exists
-            ErrorToUser(false);
-        }
-        else{
-            String cols = "(User_ID, MessageTitle, Messages)";
-            String vals = "(" + userID + ", '" + title + "', '" + message + "')";
-            dataChange.InsertRecord(table, cols, vals);
-
-            //test to ensure that the message has been added
-            //same where can be used as initial test in function
-            if(dataChange.GetRecord("*", table, TestWhere) == null)//should now be a value there so null would mean error
+        try{
+            //test to ensure that the currernt user hasn't already got a message with that title
+            //this is as the title & userID are used as a joint PK
+            if(dataChange.GetRecord("*", table, TestWhere).next()){ //if not null then already exists
                 ErrorToUser(false);
-        }
+            }
+            else{
+                String cols = "(User_ID, MessageTitle, Messages)";
+                String vals = "(" + userID + ", '" + title + "', '" + message + "')";
+                dataChange.InsertRecord(table, cols, vals);
+
+                //test to ensure that the message has been added
+                //same where can be used as initial test in function
+                if(!dataChange.GetRecord("*", table, TestWhere).next())//should now be a value there so null would mean error
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //sends client list of all currently online users
@@ -463,7 +484,7 @@ public class UserThread implements Runnable{
     
     //sends a list to the client of their friends - (friendsID and friends userName)
     private ResultSet FriendsList(){
-        int userID = 2; //clientUsersID;
+        int userID = clientUsersID;
                 
        String sqlCmd = "(SELECT Profiles.user_ID, Profiles.UserName " +
                "FROM Profiles LEFT JOIN Friends ON Profiles.User_ID = Friends.User_ID " +
@@ -476,6 +497,7 @@ public class UserThread implements Runnable{
                " AND Friends.Status_ID = 'con')";
        
         return dataChange.GetCustomRecord(sqlCmd);
+
     }
     
         //adds the users music preferences to their account
@@ -486,22 +508,24 @@ public class UserThread implements Runnable{
         //the music preferences are already in the MusicTypes table and are static so that doesn't need changing
         //so link the users music types with their ID in the profileMusicPreference table
         
-        //test to ensure the user hasn't already got that specific music preference
-        String table = "ProfileMusicPreferences";
-        String where = "User_ID = " + id + " AND MusicType_ID = '" + preferenceID + "'";
-        if(dataChange.GetRecord("*", table, where) != null) //error as user already has this music preference set
-            ErrorToUser(false);
-        else{        
-            //no error yet so proceed with inserting data
-            String insertCols = "(User_ID, MusicType_ID)";
-            String insertVals = "(" + id + ", '" + preferenceID + "')";
-            
-            dataChange.InsertRecord(table, insertCols, insertVals);
-            
-            //now data should have been inserted, test to ensure it has been
-            if(dataChange.GetRecord("*", table, where) == null) //should now be a record there so error if null
+        try{
+            //test to ensure the user hasn't already got that specific music preference
+            String table = "ProfileMusicPreferences";
+            String where = "User_ID = " + id + " AND MusicType_ID = '" + preferenceID + "'";
+            if(dataChange.GetRecord("*", table, where).next()) //error as user already has this music preference set
                 ErrorToUser(false);
-        }
+            else{        
+                //no error yet so proceed with inserting data
+                String insertCols = "(User_ID, MusicType_ID)";
+                String insertVals = "(" + id + ", '" + preferenceID + "')";
+
+                dataChange.InsertRecord(table, insertCols, insertVals);
+
+                //now data should have been inserted, test to ensure it has been
+                if(dataChange.GetRecord("*", table, where).next()) //should now be a record there so error if null
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
         
     //removes the specified message from the message board for the client
@@ -512,15 +536,18 @@ public class UserThread implements Runnable{
         //test to ensure there is a message with the current title by that user
         String tableName = "MessageBoard";
         String where = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
-        if(dataChange.GetRecord("*", tableName, where) == null) //if there is no result then message doesn't exist
-            ErrorToUser(false);
-        else{
-            dataChange.DeleteRecord(tableName, where);//delete table
-            
-            //test to ensure deletion successful
-            if(dataChange.GetRecord("*", tableName, where) != null) //if deleted should be no result
+        
+        try{
+            if(dataChange.GetRecord("*", tableName, where).next()) //if there is no result then message doesn't exist
                 ErrorToUser(false);
-        }
+            else
+                dataChange.DeleteRecord(tableName, where);//delete table
+            
+
+                    //test to ensure deletion successful
+                    if(dataChange.GetRecord("*", tableName, where).next()) //if deleted should be no result
+                        ErrorToUser(false);
+            }catch(Exception e){Log.Throw(e);}
     }
     
     
@@ -534,29 +561,32 @@ public class UserThread implements Runnable{
         //test to ensure that there is a song with that ID first
         String songTable = "SharedSongs";
         String whereTest = "SharedSongs_ID = " + songID;
-        if(dataChange.GetRecord("*", songTable, whereTest) == null){ //if no song to begin with there has been an error somewhere
-            ErrorToUser(false);
-        }
-        else{
-            //remove song form song table, and profileSongTable
-            String ProfileSongTable = "ProfileSharedSongs";
-            String whereProfileSong = "SharedSong_ID = " + songID;
-            dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
-            String whereSong = "SharedSongs_ID = " + songID;
-            dataChange.DeleteRecord(songTable, whereSong);
-            
-            //test that the database deletes have performed correctly
-            ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
-            ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
-            
-            if(songResult != null || profileSongResult != null)//if either return data there has been a deleting error
+        try{
+            if(!dataChange.GetRecord("*", songTable, whereTest).next()){ //if no song to begin with there has been an error somewhere
                 ErrorToUser(false);
-        }
+            }
+            else{
+                //remove song form song table, and profileSongTable
+                String ProfileSongTable = "ProfileSharedSongs";
+                String whereProfileSong = "SharedSong_ID = " + songID;
+                dataChange.DeleteRecord(ProfileSongTable, whereProfileSong);
+                String whereSong = "SharedSongs_ID = " + songID;
+                dataChange.DeleteRecord(songTable, whereSong);
+
+                //test that the database deletes have performed correctly
+                ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
+                ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
+            
+            
+                if(songResult.next() || profileSongResult.next())//if either return data there has been a deleting error
+                    ErrorToUser(false);
+                }
+            }catch(Exception e){Log.Throw(e);}
     }
     
     //removes/deletes the user account - removing all their data with them
     private void removeUser(){
-        int userID = clientUsersID;
+        //int userID = clientUsersID;
         
         //user needs removing from 'Friends', 'ProfileSharedSongs', 'SharedSongs', 'ProfileMusicPreferences', 'MessageBoard', 'Members' and 'Profiles' tables.
         removeUserFriendsTable();
@@ -589,17 +619,18 @@ public class UserThread implements Runnable{
                 dataChange.DeleteRecord(songsTable, conditionSong);
                 
                 //test to ensure the deletion
-                if(dataChange.GetRecord("*", songsTable, conditionSong) != null)
+                if(dataChange.GetRecord("*", songsTable, conditionSong).next())
                     ErrorToUser(false);
             }
-        }catch(Exception e){Log.Throw(e);}
-        
-        //once all data is remove from SharedSongs clear profileSharedSongs
-        dataChange.DeleteRecord(profileTable, conditionUserID);
-        
-        //test to ensure the user is no long in the table
-        if(dataChange.GetRecord("*", profileTable, conditionUserID) != null)
-            ErrorToUser(false);
+       
+
+            //once all data is remove from SharedSongs clear profileSharedSongs
+            dataChange.DeleteRecord(profileTable, conditionUserID);
+
+            //test to ensure the user is no long in the table
+            if(dataChange.GetRecord("*", profileTable, conditionUserID).next())
+                ErrorToUser(false);
+         }catch(Exception e){Log.Throw(e);}
     }
     
     //removes the user from the Profile table - account removal
@@ -611,9 +642,11 @@ public class UserThread implements Runnable{
         
         dataChange.DeleteRecord(table, condition);
         
-        //test for removal
-        if(dataChange.GetRecord("*", table, condition) != null)
-            ErrorToUser(false);
+        try{
+            //test for removal
+            if(dataChange.GetRecord("*", table, condition).next())
+                ErrorToUser(false);
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //removes the user from the Friends table - account deletion
@@ -623,15 +656,17 @@ public class UserThread implements Runnable{
         String table = "Friends";
         String condition = "User_ID = " + id + " OR Friend_ID = " + id;
         
-        //test to ensure the user has friends before removing
-        if(dataChange.GetRecord("*", table, condition) != null){ 
-            //if not null remove
-            dataChange.DeleteRecord(table, condition);
-            
-            //test to ensure the deletion has worked correctly
-            if(dataChange.GetRecord("*", table, condition) != null)//shouldnt be anything anymore
-                ErrorToUser(false);
-        }
+        try{
+            //test to ensure the user has friends before removing
+            if(dataChange.GetRecord("*", table, condition).next()){ 
+                //if not null remove
+                dataChange.DeleteRecord(table, condition);
+
+                //test to ensure the deletion has worked correctly
+                if(dataChange.GetRecord("*", table, condition).next())//shouldnt be anything anymore
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //remove users profile music preferences - account removal
@@ -640,15 +675,18 @@ public class UserThread implements Runnable{
         
         String table = "ProfileMusicPreferences";
         String condition = "User_ID = " + id;
-        //test for user music preferences
-        if(dataChange.GetRecord("*", table, condition) != null){
-            //remove the user from table
-            dataChange.DeleteRecord(table, condition);
-            
-            //test to ensure removal
-            if(dataChange.GetRecord("*", table, condition) != null)//if still not null then an error has occured
-                ErrorToUser(false);
-        }
+        
+        try{
+            //test for user music preferences
+            if(dataChange.GetRecord("*", table, condition).next()){
+                //remove the user from table
+                dataChange.DeleteRecord(table, condition);
+
+                //test to ensure removal
+                if(dataChange.GetRecord("*", table, condition).next())//if still not null then an error has occured
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
 
     //remove the user for the members table - log off or account removal
@@ -661,9 +699,11 @@ public class UserThread implements Runnable{
         
         dataChange.DeleteRecord(tableToEdit, conditionForEdit);
         
-        //test to ensure that the user has been taken off the active members table correctly
-        if(dataChange.GetRecord("*", tableToEdit, conditionForEdit) != null)//if not null then error removing user has occured
-            ErrorToUser(false);
+        try{
+            //test to ensure that the user has been taken off the active members table correctly
+            if(dataChange.GetRecord("*", tableToEdit, conditionForEdit) .next())//if not null then error removing user has occured
+                ErrorToUser(false);
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //when user logs off/deletes account removes any messages which they put on the message board
@@ -673,14 +713,14 @@ public class UserThread implements Runnable{
             String removeCondition = "User_ID = " + clientUsersID;
             
             //before trying to remove ensure the user has messages on the message board
-            if(dataChange.GetRecord("*", removeTable, removeCondition) != null) {//if not null user has messages
+            if(dataChange.GetRecord("*", removeTable, removeCondition) .next()) {//if not null user has messages
                 //use users ID to remove any messages they have posted on the message board
                 dataChange.DeleteRecord(removeTable, removeCondition);
 
                 //test to ensure that the users message board items have been removed
                 String select = "*";
                 String where = "User_ID = " + clientUsersID;
-                if(dataChange.GetRecord(select, removeTable, where) != null) //if it doesn't equal null then row deletion hasn't worked correctly
+                if(dataChange.GetRecord(select, removeTable, where) .next()) //if it doesn't equal null then row deletion hasn't worked correctly
                     ErrorToUser(false);
             }
         }catch(Exception e){Log.Throw(e);}
