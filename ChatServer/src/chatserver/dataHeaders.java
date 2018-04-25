@@ -16,7 +16,9 @@ public enum dataHeaders {
     
     //function: sends the user all the messages they have recieved, specifying who sent these messages to them
     //Data Required: N/A
-    //Data Returned: 
+    //Data Returned:2 resultSets merged 1(Message_ID, SENDER_ID, CONTENT), 2( Message_ID, Sender_ID, Content, Payload) - splt as payload is optional to send so might be null
+
+    //message_ID will increase incrementally with each sent message so display to the user, lowest first to get correct send order
     RECEIVE_MESSAGES,
     
     //function: allows the user to send a message to a specified user

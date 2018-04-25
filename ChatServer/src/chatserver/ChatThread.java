@@ -10,7 +10,9 @@ import net.deadbeat.utility.Log;
 import java.sql.*;
 import net.deadbeat.json.JSONAdapter;
 import net.deadbeat.json.JSONProperty;
+import net.deadbeat.utility.BinResource;
 import net.deadbeat.utility.Tokenizer;
+import java.util.*;
         
 /**
  *
@@ -72,13 +74,19 @@ public class ChatThread implements Runnable {
         //create a JSON object used for storing and sending return information back to the client
         JSONAdapter sendBackData = new JSONAdapter();
         
-        if(String.valueOf(headers.RECEIVE_MESSAGES).equals(headerInfo)) sendBackData.fromResultSet(receiveMessages());
-        else if(String.valueOf(headers.SEND_MESSAGE).equals(headerInfo)) sendMessage(jAdapter);
-        else{
-            //error
+        if(String.valueOf(headers.RECEIVE_MESSAGES).equals(headerInfo)) 
+            receiveMessages();
+        else if(String.valueOf(headers.SEND_MESSAGE).equals(headerInfo)) {
+            sendMessage(jAdapter);
+            //pass return infromation to function which handles client interaction
+            sendToUser(sendBackData);
         }
-        //pass return infromation to function which handles client interaction
-        sendToUser(sendBackData);
+        else{
+            Error(false);
+            //pass return infromation to function which handles client interaction
+            sendToUser(sendBackData);
+        }
+        
     }
      //send data back to client function
     private void sendToUser(JSONAdapter sendData){
@@ -101,14 +109,110 @@ public class ChatThread implements Runnable {
     private void Error(boolean error){
         opSuccess = error;
     }
+
     
     //function to return messages to the client based on what has been sent to them
-    private ResultSet receiveMessages(){
-        return null;
+    private void receiveMessages(){
+        
+        JSONAdapter jsonData = new JSONAdapter();
+        List<ResultSet> resultsHolder = new ArrayList<>();
+        
+        //NP = no payload
+        String NPselect = "Message_ID, Sender_ID, Content";
+        String NPfrom = "Message";
+        String NPwhere = "Reciever_ID = " + clientID + " AND Attachment IS NULL";
+        resultsHolder.add(dataChange.GetRecord(NPselect, NPfrom, NPwhere));
+        
+        //payload
+        String Pselect = "Message_ID, Sender_ID, Content, Payload";
+        String Pfrom = "Message LEFT JOIN Attachment ON Message.Attachment = Attachment.Attachment_ID";
+        String Pwhere = "Reciever_ID = " + clientID + "AND Message.Attachment IS NOT NULL";
+        resultsHolder.add(dataChange.GetRecord(Pselect, Pfrom, NPwhere));
+        
+        try{
+            jsonData.fromMergedResultSets(resultsHolder);
+        }catch (Exception e){Log.Throw(e);}
+        
+        sendToUser(jsonData);
+
     }
     
     //function which allows the client to send messages to other users
     private void sendMessage(JSONAdapter info){
+        //get data for attachment table
+        int attachmentID = intIDgen("Attachment", "Attachment_ID");
+        Object payload = BinResource.lookup(info.get("PAYLOAD").get());
+        
+        //get data for message table
+        int senderID = clientID;
+        int recieverID = info.get("RECEIVING_USER_ID").get();
+        int messageID = intIDgen("Message", "Message_ID");
+        String textContent = info.get("MESSAGE_TEXT").get();
+        
+        
+        //test to see if payload is null to know whether data needs adding to the attachment table
+        if(payload != null){
+            //set up sql query of attachment table
+            String attTable = "Attachment";
+            String attCols = "(Attachment_ID, Payload)";
+            String attVals = "(" + attachmentID + ", " + payload + ")";
+            
+            //set up sql query for message table
+            String mesTable = "Message";
+            String mesCols = "(Message_ID, Sender_ID, Reciever_ID, Attachment, Content)";
+            String mesVals = "(" + messageID + ", " + senderID + ", " + recieverID + ", " + attachmentID + ", '" + textContent + "')";
+            
+            //insert data
+            dataChange.InsertRecord(attTable, attCols, attVals);
+            dataChange.InsertRecord(mesTable, mesCols, mesVals);
+            
+            //test to ensure data has been inserted correctly
+            try{
+                String attWhere = "Attachment_ID = " + attachmentID;
+                String mesWhere = "Message_ID = " + messageID;
+                ResultSet attCheck = dataChange.GetRecord("*", "Attachment", attWhere);
+                ResultSet mesCheck = dataChange.GetRecord("*", "Message", mesWhere);
+                
+                if(!attCheck.next() || !mesCheck.next()){
+                    Error(false); //false = unsuccessful - will change the status message sent back to the user to warn them of issue
+                }
+            }catch(Exception e){Log.Throw(e);}
+        }
+        else{
+            //no payload so attachment table not required
+            
+            //set up sqlQuery for message table
+            String table = "Message";
+            String cols = "(Message_ID, Sender_ID, Reciever_ID, Content)";
+            String vals = "(" + messageID + ", " + senderID + ", " + recieverID + ", '" + textContent + "')";
+            
+            //insert data
+            dataChange.InsertRecord(table, cols, vals);
+            
+            //test data has been entered
+            try{
+                String where = "Message_ID = " + messageID;
+                if(!dataChange.GetRecord("*", table, where).next())
+                        Error(false);
+            }catch(Exception e){Log.Throw(e);}
+        }
+        
         
     }
+    
+    //function to generate a new unique int id
+    private int intIDgen(String table, String value){
+        int valChecker = 0;
+        String testIDselect, testIDtable, testIDwhere;
+        try{
+            do{
+                valChecker++;
+                testIDselect = value;
+                testIDtable = table;
+                testIDwhere = value + " = " + valChecker; //test for existing ID
+            }while(dataChange.GetRecord(testIDselect, testIDtable, testIDwhere).next());
+        }catch(Exception e){Log.Throw(e);}
+        return valChecker; //should return the first available ID slot
+    }
+   
 }
