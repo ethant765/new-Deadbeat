@@ -14,7 +14,7 @@ import java.util.*;
 import java.text.*;
 
 // uses jar
-import net.deadbeat.utility.*;
+import net.deadbeat.json.JSONObject;
 
 /**
  *
@@ -73,7 +73,9 @@ public class UserThread implements Runnable{
             ResultSet rs = dataChange.GetRecord(select, from, where);
             
             try{
-                clientUsersID = rs.getInt("USER_ID");
+                if(rs.next())
+                    clientUsersID = rs.getInt("USER_ID");
+                Log.Err("=========>" + clientUsersID);
             }catch(Exception e){Log.Throw(e);}
         }
                 
@@ -111,15 +113,13 @@ public class UserThread implements Runnable{
     //function used to return data to the client
     private void sendToUser(JSONAdapter sendData){
         try{
-            
+            //if there is currently nothing in the sendData create empty JSON object so STATUS can be added
+            if (sendData.size() == 0)
+                sendData.add(new JSONObject());
             //add status header onto the json string to send to client
+            sendData.get().add( new JSONProperty( "STATUS", String.valueOf(opSuccess), Tokenizer.TokenType.BOOLEAN ) );
             
-            
-            //ERROR
-            //sendData.get(0).add( new JSONProperty( "STATUS", String.valueOf(opSuccess), Tokenizer.TokenType.BOOLEAN ) );
-            
-            
-            
+
             //convert json object to string then string to bytes ready to send to client
             String message = sendData.toString();
             
@@ -603,18 +603,17 @@ public class UserThread implements Runnable{
     
     //removes/deletes the user account - removing all their data with them
     private void removeUser(){
-        //int userID = clientUsersID;
-        
+                
         //user needs removing from 'Friends', 'ProfileSharedSongs', 'SharedSongs', 'ProfileMusicPreferences', 'MessageBoard', 'Members' and 'Profiles' tables.
-        removeUserFriendsTable();
-        removeUserSongs();
-        removeUserProfileMusicPreferencesTable();
-        removeUserMessageBoardMessages();
-        removeUserMembersTable();
-        removeChatMessages();
-        removeUserProfileTable();
+        removeUserFriendsTable();//
+        removeUserSongs();//
+        removeUserProfileMusicPreferencesTable();//
+        removeUserMessageBoardMessages();//
+        removeUserMembersTable();//
+        removeChatMessages();//
+        removeUserProfileTable();//
         
-        //test to ensure removal should have occured in each indervidual function
+        //tests to ensure successful removal should have occured in each indervidual function
     }
     
     //removes all the chat messages the user has sent - called when the user deletes their account
@@ -656,6 +655,7 @@ public class UserThread implements Runnable{
     //removes the user from the ProfileSharedSongs and the SharedSongs tables
     private void removeUserSongs(){
         int id = clientUsersID;
+        ArrayList<String> songIDs = new ArrayList<String>();
         
         String profileTable = "ProfileSharedSongs";
         String songsTable = "SharedSongs";
@@ -666,24 +666,27 @@ public class UserThread implements Runnable{
         ResultSet songs = dataChange.GetRecord("SharedSong_ID", profileTable, conditionUserID);
         try{
             while(songs.next()){
-                String songID = songs.getString("SharedSong_ID");
-                
-                //use retrieved song ids to remove data from the SharedSongs table
-                String conditionSong = "SharedSongs_ID = " + songID;
-                dataChange.DeleteRecord(songsTable, conditionSong);
-                
-                //test to ensure the deletion
-                if(dataChange.GetRecord("*", songsTable, conditionSong).next())
-                    ErrorToUser(false);
+                //add all the foud song ids into a list array ready to be remove after
+                //they have to be removed later because profileTable relies on songsTable
+                songIDs.add(songs.getString("SharedSong_ID"));
             }
-       
-
-            //once all data is remove from SharedSongs clear profileSharedSongs
+            //remove all the users records from the profileTable
             dataChange.DeleteRecord(profileTable, conditionUserID);
 
-            //test to ensure the user is no long in the table
+            //test to ensure the user is no long in the profileTable
             if(dataChange.GetRecord("*", profileTable, conditionUserID).next())
                 ErrorToUser(false);
+            
+            //now look through the songIDs and remove all the one found to be associated with the user
+            for(int i = 0; i < songIDs.size(); i++){
+                String songTableCondition = "SharedSongs_ID = " + songIDs.get(i);
+                dataChange.DeleteRecord(songsTable, songTableCondition);
+                
+                //test each deletion to ensure an error has not occured
+                if(dataChange.GetRecord("*", songsTable, songTableCondition).next())
+                    ErrorToUser(false);
+            }
+            
          }catch(Exception e){Log.Throw(e);}
     }
     
@@ -749,7 +752,7 @@ public class UserThread implements Runnable{
         //members table is the table which stores active members
         String tableToEdit = "Members";
         // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
-        String conditionForEdit = "IPAddress = " + userIP.toString().substring(1) + "'";
+        String conditionForEdit = "User_ID = " + clientUsersID;
         
         dataChange.DeleteRecord(tableToEdit, conditionForEdit);
         

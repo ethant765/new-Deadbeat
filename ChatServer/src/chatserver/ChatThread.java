@@ -204,16 +204,26 @@ public class ChatThread implements Runnable {
     //function to generate a new unique int id
     private int intIDgen(String table, String value){
         int valChecker = 0;
-        String testIDselect, testIDtable, testIDwhere;
+        int holder = 0;
+        
+        String testIDselect = value;
+        String testIDtable = table;
+        String testIDwhere = value + " = " + valChecker; //test for existing ID
+
+        ResultSet rs = dataChange.GetRecord(testIDselect, testIDtable, testIDwhere);
         try{
-            do{
-                valChecker++;
-                testIDselect = value;
-                testIDtable = table;
-                testIDwhere = value + " = " + valChecker; //test for existing ID
-            }while(dataChange.GetRecord(testIDselect, testIDtable, testIDwhere).next());
+            while(rs.next()){
+                //new messageIDs always need to be a larger integer than any other ID on the table
+                //regardless of if messages have been removed
+                holder = rs.getInt(value);
+                
+                //this ensure the final int will be larger than any other in the DB
+                if(holder > valChecker)
+                    valChecker = holder + 1; 
+            }
+
         }catch(Exception e){Log.Throw(e);}
-        return valChecker; //should return the first available ID slot
+        return valChecker; //return the new largest ID
     }
    
 }
