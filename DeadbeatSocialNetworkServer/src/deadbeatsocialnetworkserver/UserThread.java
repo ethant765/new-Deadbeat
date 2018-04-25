@@ -75,7 +75,6 @@ public class UserThread implements Runnable{
             try{
                 if(rs.next())
                     clientUsersID = rs.getInt("USER_ID");
-                Log.Err("=========>" + clientUsersID);
             }catch(Exception e){Log.Throw(e);}
         }
                 
@@ -345,7 +344,7 @@ public class UserThread implements Runnable{
     //allows the client to send a friend request to another user who isn't already their friend
     private void sendFriendRequest(JSONAdapter obj){
         int clientUserID = clientUsersID;
-        int otherUsersID = obj.get(0).get("FRIEND_USER_ID").get();
+        int otherUsersID = Integer.parseInt(obj.get(0).get("FRIEND_USER_ID").getValue());
         
         String table = "Friends";
         String where = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID;
@@ -363,7 +362,7 @@ public class UserThread implements Runnable{
                 //test to ensure that the friend request is sent
                 String select = "*";
                 String whereTest = "User_ID = " + clientUserID + " AND Friend_ID = " + otherUsersID + " AND Status_ID = 'wait'";
-                if(!dataChange.GetRecord(select, table, whereTest).next())//error occured during insert opperation
+                if(dataChange.GetRecord(select, table, whereTest).next())//error occured during insert opperation
                     ErrorToUser(false); //ensure user is sent status with error
             }
         }catch(Exception e){Log.Throw(e);}
@@ -373,11 +372,11 @@ public class UserThread implements Runnable{
     //chanegs the status of a friend request (accept or reject)
     private void updateFriendRequestStatus(JSONAdapter obj){
         int clientUserID = clientUsersID;
-        int FriendRequestUserID = obj.get(0).get("FRIEND_USER_ID").get();
-        boolean accepted = Boolean.valueOf(obj.get(0).get("ACCEPTED").get());
+        int FriendRequestUserID = Integer.parseInt(obj.get("FRIEND_USER_ID").getValue());//obj.get(0).get("FRIEND_USER_ID").get();
+        int accepted = Integer.parseInt(obj.get("ACCEPTED").getValue());
 
         String newStatus;
-        if(accepted == true)
+        if(accepted == 1)
             newStatus = "con"; //connected
         else
             newStatus = "ref"; //refused
@@ -399,9 +398,9 @@ public class UserThread implements Runnable{
     //adds the users message to the message board for their friends to see
     private void addToMessageBoard(JSONAdapter obj){
         int userID = clientUsersID;
-        String title = genMessageTitle(userID);
-        String message = obj.get(0).get("MESSAGE").get();
         
+        String message = obj.get(0).get("MESSAGE").get();
+        String title = genMessageTitle(userID, message);
         String table = "MessageBoard";
         String TestWhere = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
         
@@ -412,7 +411,7 @@ public class UserThread implements Runnable{
                 ErrorToUser(false);
             }
             else{
-                String cols = "(User_ID, MessageTitle, Messages)";
+                String cols = "(User_ID, MessageTitle, Message)";
                 String vals = "(" + userID + ", '" + title + "', '" + message + "')";
                 dataChange.InsertRecord(table, cols, vals);
 
@@ -425,20 +424,12 @@ public class UserThread implements Runnable{
     }
     
     //generate a message title for the MessateBoardTable PK
-    private String genMessageTitle(int userID){
+    private String genMessageTitle(int userID, String MessageStart){
         String MessageTitle = String.valueOf(userID);
-        int num = 0;
         
-        String from = "MessageBoard";
-        String where = "User_ID = " + userID;
-        ResultSet rs = dataChange.GetRecord("COUNT(*)", from, where);
-        try{
-            if(rs.next())
-                num = rs.getInt("rowcunt");
-            Log.Out(num);
-        }catch(Exception e){Log.Throw(e);}
-        num++;
-        return MessageTitle + num;
+        
+        
+        return MessageTitle + MessageStart.subSequence(0, 4);
     }
     
     //sends client list of all currently online users
@@ -455,7 +446,7 @@ public class UserThread implements Runnable{
     //sends the client a list of songs shared by their specified friend or themself
     //send the function a user_ID not nesseserally the clients - (friends IDs are also sent to the client with friends list)
     private ResultSet SharedSongsList(JSONAdapter obj){
-        int userID = obj.get(0).get("USER_ID").get();
+        int userID = Integer.parseInt(obj.get("USER_ID").getValue());
 
         String select = "SharedSongs.SharedSongs_ID, SharedSong, SongName, Artist, ReleaseDate, Album";
         String from = "SharedSongs LEFT JOIN ProfileSharedSongs ON SharedSongs.SharedSongs_ID = ProfileSharedSongs.SharedSong_ID";
@@ -539,7 +530,7 @@ public class UserThread implements Runnable{
                 dataChange.InsertRecord(table, insertCols, insertVals);
 
                 //now data should have been inserted, test to ensure it has been
-                if(dataChange.GetRecord("*", table, where).next()) //should now be a record there so error if null
+                if(!dataChange.GetRecord("*", table, where).next()) //should now be a record there so error if null
                     ErrorToUser(false);
             }
         }catch(Exception e){Log.Throw(e);}
@@ -559,7 +550,7 @@ public class UserThread implements Runnable{
         String where = "User_ID = " + userID + " AND MessageTitle = '" + title + "'";
         
         try{
-            if(dataChange.GetRecord("*", tableName, where).next()) //if there is no result then message doesn't exist
+            if(!dataChange.GetRecord("*", tableName, where).next()) //if there is no result then message doesn't exist
                 ErrorToUser(false);
             else
                 dataChange.DeleteRecord(tableName, where);//delete table
@@ -573,7 +564,8 @@ public class UserThread implements Runnable{
     
         //removes the specified song from the server for the client
     private void removeSong(JSONAdapter obj){
-        int songID = obj.get(0).get("SONG_ID").get();
+        //Log.Out(obj.get("SONG_ID").get());
+        int songID = 1;//= obj.get("SONG_ID").get();//obj.get(0).get("SONG_ID").get();
         
         //test to ensure that there is a song with that ID first
         String songTable = "SharedSongs";
@@ -591,13 +583,14 @@ public class UserThread implements Runnable{
                 dataChange.DeleteRecord(songTable, whereSong);
 
                 //test that the database deletes have performed correctly
-                ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
+                /*ResultSet songResult = dataChange.GetRecord("*", songTable, whereSong);
                 ResultSet profileSongResult = dataChange.GetRecord("*", ProfileSongTable, whereProfileSong);
             
             
                 if(songResult.next() || profileSongResult.next())//if either return data there has been a deleting error
                     ErrorToUser(false);
-                }
+                }*/
+            }
             }catch(Exception e){Log.Throw(e);}
     }
     
