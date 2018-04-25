@@ -528,6 +528,10 @@ public class UserThread implements Runnable{
         }catch(Exception e){Log.Throw(e);}
     }
         
+    
+      //----------------------------------------functions which remove user data from the database---------------------------------------------------
+    
+    
     //removes the specified message from the message board for the client
     private void removeMessage(JSONAdapter obj){
         int userID = clientUsersID;
@@ -549,10 +553,6 @@ public class UserThread implements Runnable{
                         ErrorToUser(false);
             }catch(Exception e){Log.Throw(e);}
     }
-    
-    
-    
-    //----------------------------------------functions which remove user data from the database---------------------------------------------------
     
         //removes the specified song from the server for the client
     private void removeSong(JSONAdapter obj){
@@ -594,9 +594,46 @@ public class UserThread implements Runnable{
         removeUserProfileMusicPreferencesTable();
         removeUserMessageBoardMessages();
         removeUserMembersTable();
+        removeChatMessages();
         removeUserProfileTable();
         
         //test to ensure removal should have occured in each indervidual function
+    }
+    
+    //removes all the chat messages the user has sent - called when the user deletes their account
+    private void removeChatMessages(){
+        int id = clientUsersID;
+        
+        String messageTable = "Message";
+        String attachmentTable = "Attachment";
+        
+        //before deleting store all the attachment IDs to remove the users messages from the attachment table as well
+        String select = "Attachment";
+        String where = "(Sender_ID = " + id + " OR Reciever_ID = " + id + ") AND Attachment IS NOT NULL";
+        ResultSet attachmentIDs = dataChange.GetRecord(select, messageTable, where);
+        
+        //remove all the chat messages which the client has sent before
+        String TextOnlyChatCondition = "Sender_ID = " + id + " OR Reciever_ID = " + id;
+        dataChange.DeleteRecord(messageTable, TextOnlyChatCondition);
+
+        try{
+             //test the deletion of the user from the Message table
+            if(dataChange.GetRecord("*", messageTable, TextOnlyChatCondition).next()) //if a value is returned then an error occured in deletion
+                ErrorToUser(false);
+            
+             //remove all the attachment files the client has been involved in a chat with
+            while(attachmentIDs.next()){
+                int attachID = attachmentIDs.getInt("Attachment"); //loop through each attachment ID connected to the users chat sessions and remove
+                
+        
+                String FileChatCondition = "Attachment_ID = " + attachID;
+                dataChange.DeleteRecord(attachmentTable, FileChatCondition);
+                
+                //test each deletion has occured correctly
+                if(dataChange.GetRecord("*", attachmentTable, FileChatCondition).next())//error if value returned
+                    ErrorToUser(false);
+            }
+        }catch(Exception e){Log.Throw(e);}
     }
     
     //removes the user from the ProfileSharedSongs and the SharedSongs tables
