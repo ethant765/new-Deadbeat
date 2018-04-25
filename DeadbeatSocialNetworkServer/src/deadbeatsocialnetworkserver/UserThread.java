@@ -47,6 +47,7 @@ public class UserThread implements Runnable{
         String table = "Members";
         String select = "User_ID";
         String condition = "IPAddress = '" + userIP.toString().substring(1) + "'";
+        Log.Out(condition);
         ResultSet rs = dataChange.GetRecord(select, table, condition);
         
         try{
@@ -732,7 +733,7 @@ public class UserThread implements Runnable{
         //members table is the table which stores active members
         String tableToEdit = "Members";
         // remove logging off user based on their IPAddress as this will be unique per user, and set each time a user logs in
-        String conditionForEdit = "IPAddress = " + userIP;
+        String conditionForEdit = "IPAddress = " + userIP.toString().substring(1) + "'";
         
         dataChange.DeleteRecord(tableToEdit, conditionForEdit);
         
